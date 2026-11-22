@@ -1,6 +1,13 @@
 {
     "name": "BucketPilot",
     "summary": "Connect BucketPilot and schedule project file backups",
+    "description": (
+        "Schedule project file backups to a BucketPilot workspace from Odoo. "
+        "Connecting sends the API key to BucketPilot over HTTPS. "
+        "A saved backup authorizes selected file contents and relative paths to be sent "
+        "to the configured storage destination."
+    ),
+    "images": ["static/description/overview.png"],
     "version": "18.0.1.0.0",
     "category": "Administration",
     "license": "GPL-2",

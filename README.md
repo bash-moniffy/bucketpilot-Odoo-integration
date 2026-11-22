@@ -23,23 +23,15 @@ The add-on covers **project files**. Use your usual Odoo procedures for database
 
 ## Install and run
 
-The module source is at the repository root. For an installation from Git, make the checkout directory `bucketpilot` so Odoo discovers the expected technical module name:
-
-```sh
-git clone git@github.com:bash-moniffy/bucketpilot-Odoo-integration.git /path/to/custom-addons/bucketpilot
-```
-
-Use the parent `/path/to/custom-addons` in Odoo's `addons_path`.
-
-1. Clone this repository into a directory named `bucketpilot` inside your Odoo add-ons path, then restart Odoo.
+1. Put the `bucketpilot/` folder in a configured Odoo add-ons directory and restart Odoo.
 2. Enable developer mode, choose **Apps → Update Apps List**, then find **BucketPilot** and click **Activate**.
 3. Open **BucketPilot → Connection** and validate your API key.
 4. Open **Backups** to select files, choose a destination and review the backup before saving.
 
 BucketPilot detects the source root in standard project layouts. Use `BUCKETPILOT_PROJECT_ROOT` to select a different directory or configure a custom deployment. The installation guides explain this setting and the optional API key storage and email configuration.
 
-[English installation guide](INSTALLATION.en.md) · [دليل التثبيت بالعربية](INSTALLATION.ar.md)
+[English installation guide](bucketpilot/INSTALLATION.en.md) · [دليل التثبيت بالعربية](bucketpilot/INSTALLATION.ar.md)
 
 ## License
 
-[GNU General Public License](LICENSE.txt)
+[GNU General Public License](bucketpilot/LICENSE.txt)

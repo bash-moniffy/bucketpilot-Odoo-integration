@@ -1,0 +1,44 @@
+<section class="container py-4">
+  <div class="text-center mb-4">
+    <h1>BucketPilot for Odoo 18</h1>
+    <p class="lead">Schedule project file backups to your BucketPilot storage from inside Odoo.</p>
+    <img src="overview.png" class="img-fluid rounded border" alt="BucketPilot overview in Odoo showing a connected workspace and storage buckets">
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <h3>Choose your files</h3>
+      <p>Select files or folders in the approved project directory. Git ignore rules and explicit exclusions help narrow the selection.</p>
+    </div>
+    <div class="col-md-4">
+      <h3>Set a schedule</h3>
+      <p>Run a backup immediately, choose a one-time date, or schedule daily, weekly or monthly backups in your timezone.</p>
+    </div>
+    <div class="col-md-4">
+      <h3>Review the result</h3>
+      <p>Follow progress in Odoo, inspect which files were confirmed and enable optional email reports through Odoo SMTP.</p>
+    </div>
+  </div>
+
+  <div class="mb-4">
+    <h2>Create a backup</h2>
+    <p>Name the backup, choose the bucket and destination folder, and review the source and schedule before saving.</p>
+    <img src="backup-builder.png" class="img-fluid rounded border" alt="BucketPilot backup builder with a project file list and five configuration steps">
+  </div>
+
+  <div class="mb-4">
+    <h2>Track each run</h2>
+    <p>Backup History records execution status, the destination and confirmed upload totals.</p>
+    <img src="backup-history.png" class="img-fluid rounded border" alt="BucketPilot backup history with example completed runs">
+  </div>
+
+  <div class="border rounded p-3">
+    <h2>Requirements and data</h2>
+    <ul>
+      <li>Odoo 18 with support for server-side Python add-ons, Git, Jinja2 and Requests.</li>
+      <li>A BucketPilot workspace with API access and a connected storage bucket. Backups require a read/write API key.</li>
+      <li>Connection checks send the API key to BucketPilot over HTTPS. Saving a backup authorizes the worker to send selected project file contents and their relative paths to the configured storage destination.</li>
+      <li>The app covers project files. Use your existing Odoo procedures for database backups, the filestore and restore.</li>
+    </ul>
+  </div>
+</section>
