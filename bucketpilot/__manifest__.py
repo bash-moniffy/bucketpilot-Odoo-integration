@@ -1,5 +1,7 @@
 {
     "name": "BucketPilot",
+    "author": "BucketPilot",
+    "website": "https://bucketpilot.io/",
     "summary": "Connect BucketPilot and schedule project file backups",
     "description": (
         "Schedule project file backups to a BucketPilot workspace from Odoo. "
