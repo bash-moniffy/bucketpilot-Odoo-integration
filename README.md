@@ -34,4 +34,4 @@ BucketPilot detects the source root in standard project layouts. Use `BUCKETPILO
 
 ## License
 
-[GNU General Public License](bucketpilot/LICENSE.txt)
+[GNU General Public License version 2](bucketpilot/LICENSE)

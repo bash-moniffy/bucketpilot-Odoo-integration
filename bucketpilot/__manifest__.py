@@ -10,7 +10,7 @@
     "images": ["static/description/overview.png"],
     "version": "18.0.1.0.0",
     "category": "Administration",
-    "license": "GPL-2",
+    "license": "Other OSI approved licence",
     "depends": ["web", "mail"],
     "external_dependencies": {"python": ["jinja2", "requests"], "bin": ["git"]},
     "data": ["security/groups.xml", "data/cron.xml", "views/menu.xml"],
