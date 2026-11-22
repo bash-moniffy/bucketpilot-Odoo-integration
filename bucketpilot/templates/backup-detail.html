@@ -1,0 +1,46 @@
+<section class="bp-backup-detail" data-backup-detail>
+  <a class="bp-back-link" href="{{ links.history }}">{{ 'Back to Backup History' }}</a>
+  <section class="bp-card bp-execution-card" id="bucketpilot-backup-progress" data-bp-tone="{{ backup.tone }}">
+    <header class="bp-detail-hero"><div><p class="bp-eyebrow">{{ 'BACKUP EXECUTION' }}</p><h2>{{ backup.name }}</h2></div><span class="bp-job-status" data-detail-status data-bp-status="{{ backup.status }}" data-bp-tone="{{ backup.tone }}">{{ backup.status_label }}</span></header>
+    <div class="bp-execution-progress">
+      <p data-progress-summary aria-live="polite">{{ backup.headline }}</p>
+      <progress max="100" aria-label="{{ 'Discovered files processed' }}" {% if backup.percentage is not none %}value="{{ backup.percentage }}"{% endif %} {% if not backup.active and not backup.total %}hidden{% endif %}></progress>
+      <p class="bp-detail-empty-notice" data-progress-notice {% if not backup.notice %}hidden{% endif %}>{{ backup.notice }}</p>
+      <p class="bp-live-feedback" data-progress-feedback aria-live="polite"></p>
+    </div>
+    <dl class="bp-execution-metrics">
+      <div><dt>{{ 'Uploaded files' }}</dt><dd data-progress-value="successful">{{ backup.successful }}</dd></div>
+      <div><dt>{{ 'Failed files' }}</dt><dd data-progress-value="failed" class="bp-failed-count {% if backup.failed %}has-failures{% endif %}">{{ backup.failed }}</dd></div>
+      <div><dt>{{ 'Skipped files' }}</dt><dd data-progress-value="skipped">{{ backup.skipped }}</dd></div>
+      <div><dt>{{ 'Processed data' }}</dt><dd data-progress-bytes>{{ backup.processed_bytes }}</dd></div>
+    </dl>
+    <p class="bp-detail-empty-notice" data-progress-scan {% if not backup.scan_errors %}hidden{% endif %}>{{ backup.scan_errors }} discovery issues</p>
+    <div class="bp-detail-error" data-progress-error role="alert" {% if not backup.error %}hidden{% endif %}>{{ backup.error }}</div>
+    <div class="bp-execution-actions"><a class="button bp-button-danger" data-backup-action="cancel" href="{{ links.cancel }}" {% if not backup.active %}hidden{% endif %}>{{ 'Cancel backup' }}</a><a class="button button--primary" data-backup-action="resume" href="{{ links.resume }}" {% if not backup.resumable %}hidden{% endif %}>{{ 'Resume backup' }}</a></div>
+  </section>
+  <div class="bp-execution-grid">
+    <section class="bp-card bp-detail-section"><h3>{{ 'Destination' }}</h3><dl class="bp-detail-grid">
+      <div><dt>{{ 'Bucket' }}</dt><dd>{{ backup.bucket }}</dd></div><div><dt>{{ 'Provider' }}</dt><dd>{{ backup.provider }}</dd></div>
+      <div class="bp-detail-wide"><dt>{{ 'Backup folder' }}</dt><dd class="bp-detail-path">{{ backup.prefix }}</dd></div>
+    </dl></section>
+    <section class="bp-card bp-detail-section"><h3>{{ 'Timing' }} <span class="bp-detail-zone">{{ backup.timezone }}</span></h3><dl class="bp-detail-grid">
+      <div><dt>{{ 'Requested' }}</dt><dd>{{ backup.dates.created }}</dd></div><div><dt>{{ 'Started' }}</dt><dd data-progress-date="started">{{ backup.dates.started }}</dd></div>
+      <div><dt>{{ 'Completed' }}</dt><dd data-progress-date="completed">{{ backup.dates.completed }}</dd></div><div><dt>{{ 'Last activity' }}</dt><dd data-progress-date="activity">{{ backup.dates.activity }}</dd></div>
+    </dl></section>
+  </div>
+  <section class="bp-card bp-detail-section"><h3>{{ 'Sources' }} <span class="bp-detail-zone">{{ backup.source_count }}</span></h3>
+    <div class="bp-detail-source-list {% if backup.source_count > 5 %}is-scrollable{% endif %}" {% if backup.source_count > 5 %}tabindex="0" role="region" aria-label="{{ 'Backup sources' }}"{% endif %}>
+      {% for state, sources in backup.sources %}{% if sources %}<section class="bp-source-group"><h4>{{ 'Included' if state == 'included' else 'Excluded' }} ({{ sources|length }})</h4><ul>{% for source in sources %}<li><span class="bp-entry-name bp-entry-name--{{ 'folder' if source.directory else 'file' }}">{{ source.path or 'project /' }}</span></li>{% endfor %}</ul></section>{% endif %}{% endfor %}
+      {% if not backup.source_count %}<p>{{ 'No source information recorded.' }}</p>{% endif %}
+    </div>
+  </section>
+  <section class="bp-card bp-detail-section"><div class="bp-file-activity-heading"><div><h3>{{ 'File activity' }}</h3><p>{{ 'Recorded file checkpoints. Refresh to see the latest entries.' }}</p></div><a class="button bp-refresh-icon" href="{{ links.refresh }}" aria-label="{{ 'Refresh file activity' }}" title="{{ 'Refresh file activity' }}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 7a7 7 0 0 1 11.6-1L20 9M4 15l2.3 3A7 7 0 0 0 17.9 17"/></svg></a></div><div class="bp-table-scroll bp-backup-audit-scroll" tabindex="0" role="region" aria-label="{{ 'Backup file activity' }}"><table><thead><tr>{% for label in ['Source', 'Destination', 'Checkpoint', 'Size', 'Attempts / retry', 'Issue'] %}<th scope="col">{{ label }}</th>{% endfor %}</tr></thead>
+  <tbody>{% for item in items %}<tr>
+    <td>{{ item.path }}</td><td>{{ backup.prefix }}{{ item.path }}</td><td>{{ item.state|replace('_', ' ')|capitalize }}</td>
+    <td title="{{ item.size }} B">{{ human_bytes(item.size) }}</td><td>{{ item.attempts }}{% if item.next_retry %}<br><small>{{ item.next_retry }} UTC</small>{% endif %}</td><td>{{ item.error or '—' }}</td>
+  </tr>{% else %}<tr><td colspan="6">No file checkpoints recorded yet.</td></tr>{% endfor %}</tbody></table></div><div class="bp-execution-pager"><nav class="bp-audit-control" aria-label="File activity pages">
+    {% if page > 0 %}<a class="button bp-page-control bp-page-previous" href="{{ route }}?page={{ page - 1 }}">Previous</a>{% endif %}
+    {% if (page + 1) * 25 < total %}<a class="button bp-page-control bp-page-next" href="{{ route }}?page={{ page + 1 }}">Next</a>{% endif %}
+  </nav></div></section>
+  <details class="bp-card bp-execution-technical"><summary>{{ 'Technical details' }}</summary><dl class="bp-detail-grid"><div><dt>{{ 'Backup ID' }}</dt><dd><code>{{ backup.id }}</code></dd></div><div><dt>{{ 'Scan errors' }}</dt><dd data-progress-value="scan_errors">{{ backup.scan_errors }}</dd></div></dl><p data-progress-technical-summary>{{ backup.summary }}</p></details>
+</section>

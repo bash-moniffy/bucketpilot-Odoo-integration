@@ -1,0 +1,12 @@
+<div id="bucketpilot-dashboard">
+  <div data-dashboard-context>{% include "dashboard-context.html" %}</div>
+  <section class="bp-card" aria-labelledby="bp-buckets-title">
+    <div class="bp-card-heading"><div><p class="bp-eyebrow">CONNECTED STORAGE</p><h2 id="bp-buckets-title">Workspace buckets</h2><p>Search connected storage by name, provider or region.</p></div>{% with attribute_name='data-dashboard-refresh' %}{% include 'refresh.html' %}{% endwith %}</div>
+    <form id="bp-bucket-filter-form" class="bp-filters bp-search-controls" method="get" role="search">
+      <div class="bp-search"><label for="bp-bucket-search">Search buckets</label><input type="search" id="bp-bucket-search" name="q" maxlength="100" value="{{ q }}" placeholder="Search by name, provider or region…" autocomplete="off"></div>
+      <button class="button" type="submit">Search</button><a class="button" data-clear-bucket-filters href="{{ '/bucketpilot/buckets' if buckets_only else '/bucketpilot' }}">Clear Filters</a>
+    </form>
+    <p class="bp-builder-alert" data-dashboard-error role="alert" hidden></p>
+    <div data-dashboard-results>{% include 'dashboard-results.html' %}</div>
+  </section>
+</div>

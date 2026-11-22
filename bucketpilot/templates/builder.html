@@ -1,0 +1,79 @@
+<div class="bp-builder" data-bp-builder>
+  {% if not worker_recent %}<p class="bp-notice" role="status">{{ 'No recent independent worker was detected. Requests stay pending until the Odoo scheduled action runs; opening this page does not process backups.' }}</p>{% endif %}
+  {% if editing %}<div class="bp-edit-page-context"><div><strong>{{ 'Editing saved plan' }}</strong><span>{{ edit_name }}</span></div></div>{% endif %}
+  <div class="bp-builder-toolbar"><div><span class="bp-draft-label">{{ 'PLAN EDITOR' if editing else 'BACKUP BUILDER' }}</span><p>{{ 'Select sources on the left. Configure and review your backup on the right.' }}</p></div><span class="bp-save-state" role="status" aria-live="polite" data-save-state>{{ 'Loading draft…' }}</span>{% with attribute_name='data-reload-draft', title='Reload the saved backup draft' %}{% include 'refresh.html' %}{% endwith %}</div>
+  <div class="bp-builder-alert" role="alert" data-builder-error hidden></div>
+
+  <nav aria-label="{{ 'Backup setup progress' }}"><ol class="bp-setup-progress">{% for step in [{'key':'name','label':'Backup name'},{'key':'bucket','label':'Bucket'},{'key':'path','label':'Folder'},{'key':'selection','label':'Sources'},{'key':'schedule','label':'Schedule'}] %}<li data-progress="{{ step.key }}"><button type="button" data-open-step="{{ step.key }}" {% if step.key == 'path' %}disabled{% endif %} aria-controls="bp-step-{{ step.key }}"><span class="bp-progress-marker">{{ loop.index }}</span><span>{{ step.label }}</span><span class="visually-hidden" data-progress-state></span></button></li>{% endfor %}</ol></nav>
+  <div class="bp-builder-grid">
+    <section class="bp-source-panel bp-card" aria-labelledby="bp-source-heading">
+      <div class="bp-card-heading"><div><p class="bp-eyebrow">{{ 'APPROVED ODOO PROJECT' }}</p><h2 id="bp-source-heading">{{ 'Files & folders' }}</h2></div><span class="bp-pill" data-tree-count>0 {{ 'selected rules' }}</span></div>
+      <p class="bp-builder-hint">{{ 'Only permitted project sources are shown. Sensitive, Git-ignored and unsafe paths stay excluded.' }}</p>
+      <form class="bp-explorer-search bp-search-controls" data-file-search><label for="bp-file-search">{{ 'Search nested files and folders' }}</label><div class="bp-inline"><input type="search" id="bp-file-search" maxlength="100" placeholder="{{ 'Search by name or relative path…' }}"><button class="button" type="button" data-clear-search>{{ 'Clear Search' }}</button></div></form>
+      <nav class="bp-tree-breadcrumb" aria-label="{{ 'Current project directory' }}"><button type="button" class="button" data-tree-home>{{ 'Project root' }}</button><span data-tree-path>/</span><button type="button" class="button" data-tree-back>{{ 'Up' }}</button></nav>
+      <p class="bp-builder-hint" role="status" aria-live="polite" data-tree-feedback></p>
+      <div class="bp-tree-scroll" tabindex="0" role="region" aria-label="{{ 'Project source explorer' }}"><table class="bp-builder-tree"><thead><tr><th>{{ 'Select' }}</th><th>{{ 'Source / relative path' }}</th><th>{{ 'Size' }}</th></tr></thead><tbody data-source-rows></tbody></table></div>
+      <div class="bp-inline bp-tree-actions"><button class="button" type="button" data-tree-more hidden>{{ 'Load more' }}</button><button class="button" type="button" data-search-more hidden>{{ 'Search more folders' }}</button><button class="button" type="button" data-tree-retry hidden>{{ 'Retry' }}</button></div>
+      <p class="bp-builder-hint">{{ 'Selecting a folder includes its permitted contents. Uncheck a child to exclude it. A mixed checkbox means only some contents are selected.' }}</p>
+      <noscript><p class="messages messages--warning">{{ 'This builder needs JavaScript for persistent selections and scheduling. Enable JavaScript to continue; existing jobs continue independently.' }}</p></noscript>
+    </section>
+    <aside class="bp-config-panel" aria-label="{{ 'Backup configuration' }}">
+      <div class="bp-config-actions"><button class="button bp-button-danger" type="button" data-clear-all>{{ 'Reset changes' if editing else 'Clear All' }}</button></div>
+      <p class="bp-config-note">{{ 'Changes apply only after you review and choose Save changes.' if editing else 'Complete the steps, then review and confirm your backup below.' }}</p>
+      <details id="bp-step-name" class="bp-builder-step" data-step-name><summary><span class="bp-step-number">1</span><span>{{ 'Backup name' }}<small data-name-summary>{{ 'Enter a backup name' }}</small></span><span class="bp-step-state" data-name-ready></span></summary><div class="bp-backup-name"><label for="bp-plan-name">{{ 'Backup name' }}</label><input type="text" id="bp-plan-name" name="backup_name" form="bp-schedule-form" maxlength="120" placeholder="{{ 'Enter a backup name' }}" autocomplete="off" aria-describedby="bp-name-state" required><small id="bp-name-state" role="status" data-name-state>{{ 'Enter a backup name.' }}</small></div></details>
+      <details id="bp-step-bucket" class="bp-builder-step" data-step-bucket><summary><span class="bp-step-number">2</span><span>{{ 'Destination Bucket' }}<small data-bucket-summary>{{ 'Choose connected storage' }}</small></span><span class="bp-step-state" data-bucket-saved></span></summary>
+        <div class="bp-saved-card" data-bucket-card hidden><strong data-bucket-card-name></strong><span data-bucket-card-meta></span><button class="button" type="button" data-change-bucket>{{ 'Change' }}</button></div>
+        <div data-bucket-editor><form class="bp-search-controls" data-bucket-search><label for="bp-bucket-filter">{{ 'Find a destination bucket' }}</label><div class="bp-inline"><input id="bp-bucket-filter" type="search" maxlength="100" placeholder="{{ 'Name, provider or region' }}"><button class="button" type="button" data-clear-bucket-search>{{ 'Clear Search' }}</button></div></form>
+          <div class="bp-bucket-picker-scroll"><table><thead><tr><th>{{ 'Select' }}</th><th>{{ 'Bucket' }}</th></tr></thead><tbody data-bucket-rows></tbody></table></div>
+          <div class="bp-compact-pager"><span data-buckets-count role="status"></span><nav hidden class="bp-pager-actions" aria-label="{{ 'Bucket pages' }}"><button class="button bp-page-control bp-page-previous" type="button" data-buckets-previous hidden disabled>{{ 'Previous' }}</button><button class="button bp-page-control bp-page-next" type="button" data-buckets-next hidden disabled>{{ 'Next' }}</button></nav></div>
+        </div>
+      </details>
+      <details id="bp-step-path" class="bp-builder-step bp-step-locked" data-step-path><summary aria-disabled="true"><span class="bp-step-number">3</span><span>{{ 'Choose Backup Folder' }}<small data-path-summary>{{ 'Choose a bucket first' }}</small></span><span class="bp-step-state" data-path-saved></span></summary>
+        <div class="bp-saved-card" data-path-card hidden><strong data-path-card-bucket></strong><span data-path-card-prefix></span><small data-destination-evidence></small><button class="button" type="button" data-change-path>{{ 'Change' }}</button></div>
+        <form data-path-form>
+          <fieldset class="bp-destination-modes" data-destination-modes disabled><legend class="visually-hidden">{{ 'Destination mode' }}</legend>
+            <label><input type="radio" name="bp-destination-mode" value="root"><span>{{ 'Bucket root' }}</span></label>
+            <label><input type="radio" name="bp-destination-mode" value="manual" aria-label="{{ 'Enter Folder Path Manually' }}"><span>{{ 'Folder path' }}</span></label>
+            <label><input type="radio" name="bp-destination-mode" value="browser" aria-label="{{ 'Your Bucket folders' }}"><span>{{ 'Your Bucket folders' }}</span></label>
+          </fieldset>
+          <div data-root-mode hidden><p>{{ 'Backups will be placed at the top level of the selected bucket.' }}</p></div>
+          <div data-manual-mode hidden><label for="bp-destination-path">{{ 'Folder path' }}</label><input type="text" id="bp-destination-path" disabled maxlength="140" placeholder="backups/my-website"><small>{{ 'Enter a folder path. To use the top level, choose Bucket root instead.' }}</small></div>
+          <div data-browser-mode hidden><button class="button" type="button" data-browse-folders disabled>{{ 'Browse Bucket Folders' }}</button><span class="bp-folder-choice-label">{{ 'Selected folder' }}</span><p data-pending-folder role="status">{{ 'No folder selected' }}</p></div>
+
+        </form>
+        <p class="bp-destination-preview" data-destination-preview></p>
+      </details>
+      <details id="bp-step-selection" class="bp-builder-step" data-step-selection><summary><span class="bp-step-number">4</span><span>{{ 'Selected Files & Folders' }}<small data-selection-count>{{ 'No sources selected' }}</small></span></summary><div class="bp-selection-list" data-selection-list></div><p class="bp-builder-hint">{{ 'Folders include their permitted contents. Excluded items will be skipped.' }}</p><button class="button bp-button-danger" type="button" data-clear-selection>{{ 'Clear selection' }}</button></details>
+      <details id="bp-step-schedule" class="bp-builder-step" data-step-schedule><summary><span class="bp-step-number">5</span><span>{{ 'Backup Schedule' }}<small data-schedule-summary>{{ 'Run now or choose a schedule' }}</small></span></summary>
+        <form id="bp-schedule-form" data-schedule-form>
+          <div class="bp-schedule-grid"><div class="form-item"><label for="bp-frequency">{{ 'Frequency' }}</label><select id="bp-frequency" required><option value="">{{ 'Choose frequency…' }}</option>{% if not editing %}<option value="now">{{ 'Run Now' }}</option>{% endif %}<option value="once">{{ 'Run Once Later' }}</option><option value="daily">{{ 'Daily' }}</option><option value="weekly">{{ 'Weekly' }}</option><option value="monthly">{{ 'Monthly' }}</option></select></div><div class="form-item"><label for="bp-timezone">{{ 'Timezone' }}</label><select id="bp-timezone">{% for zone in timezones %}<option value="{{ zone }}">{{ zone }}</option>{% endfor %}</select></div>
+          <div class="form-item" data-once-field><label for="bp-run-date">{{ 'Date' }}</label><input id="bp-run-date" type="date"></div><div class="form-item" data-weekly-field><label for="bp-weekday">{{ 'Day of week' }}</label><select id="bp-weekday">{% for label in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}<option value="{{ loop.index }}">{{ label }}</option>{% endfor %}</select></div><div class="form-item" data-monthly-field><label for="bp-monthday">{{ 'Day of month' }}</label><input id="bp-monthday" type="number" min="1" max="31" value="1"></div><div class="form-item" data-time-field><label for="bp-run-time">{{ 'Local time' }}</label><input id="bp-run-time" type="time" value="02:00"></div></div>
+              <p class="bp-builder-hint">{{ 'Monthly dates beyond the end of a month use its final day. DST gaps roll forward; repeated times run once at the first occurrence. Execution begins when the Odoo scheduled action next checks, not at a guaranteed exact minute.' }}</p>
+        </form><div class="bp-step-inline-error" role="alert" data-schedule-error hidden></div>
+      </details>
+      <div class="bp-builder-final"><p data-final-summary>{{ 'Save your configuration and review it before continuing.' }}</p><button type="button" class="button button--primary" data-review-builder aria-describedby="bp-review-status" disabled>{{ 'Review & save changes' if editing else 'Review & create backup' }}</button><p id="bp-review-status" role="status" data-review-status></p></div>
+    </aside>
+  </div>
+
+  <dialog class="bp-folder-browser" data-folder-browser aria-labelledby="bp-folder-browser-heading">
+    <header class="bp-folder-browser-header"><div><p class="bp-eyebrow" data-folder-bucket></p><h2 id="bp-folder-browser-heading">{{ 'Choose Backup Folder' }}</h2></div><button type="button" class="button" aria-label="{{ 'Close folder browser' }}" data-close-browser>×</button></header>
+    <div data-folder-picker>
+      <div class="bp-folder-location"><button class="button" type="button" data-folder-back>{{ 'Back' }}</button><nav class="bp-folder-breadcrumbs" aria-label="{{ 'Backup folder location' }}" data-folder-breadcrumbs></nav></div>
+      <div class="bp-folder-tools"><div><label for="bp-folder-search">{{ 'Search this folder' }}</label><input type="search" id="bp-folder-search" maxlength="100" placeholder="{{ 'Find folders shown here' }}"></div><button class="button" type="button" data-clear-folder-search>{{ 'Clear Search' }}</button><button class="button" type="button" data-new-folder>{{ 'New Folder' }}</button></div>
+      <p class="bp-builder-hint" role="status" data-folders-feedback></p>
+      <div class="bp-folder-loading-feedback" data-bp-inline-feedback></div>
+      <div class="bp-folder-list" data-folder-list></div><button class="button" type="button" data-folders-more hidden>{{ 'Show More' }}</button>
+      <footer class="bp-folder-browser-footer"><div><small>{{ 'Current folder' }}</small><strong data-current-folder></strong></div><button class="button" type="button" data-cancel-browser>{{ 'Cancel' }}</button><button class="button button--primary" type="button" data-use-folder>{{ 'Select This Folder' }}</button></footer>
+    </div>
+  </dialog>
+  <dialog class="bp-review-dialog bp-plan-dialog bp-new-folder-dialog" data-folder-dialog aria-labelledby="bp-folder-heading">
+    <header class="bp-detail-header"><h2 id="bp-folder-heading">{{ 'Create Folder' }}</h2><button class="bp-detail-close" type="button" data-close-new-folder aria-label="{{ 'Close create folder' }}"><span aria-hidden="true">×</span></button></header>
+    <form id="bp-new-folder-form" class="bp-detail-body" data-new-folder-form><p class="bp-new-folder-location">{{ 'Create inside' }} <span data-new-folder-parent></span></p><label for="bp-new-folder-name">{{ 'Folder name' }}</label><input type="text" id="bp-new-folder-name" required maxlength="140" autocomplete="off" placeholder="{{ 'Enter folder name' }}"><div class="bp-folder-operation-feedback" data-bp-inline-feedback></div><p class="bp-step-inline-error" data-new-folder-error role="alert"></p></form>
+    <footer class="bp-detail-footer"><button class="button" type="button" data-cancel-folder>{{ 'Cancel' }}</button><button class="button button--primary" type="submit" form="bp-new-folder-form" data-create-folder-submit>{{ 'Create Folder' }}</button></footer>
+  </dialog>
+  <dialog class="bp-review-dialog bp-plan-dialog" data-review-dialog aria-labelledby="bp-review-heading">
+    <header class="bp-detail-header"><h2 id="bp-review-heading">{{ 'Review plan changes' if editing else 'Review backup plan' }}</h2><button class="bp-detail-close" type="button" data-review-close aria-label="{{ 'Close review' }}"><span aria-hidden="true">×</span></button></header>
+    <div class="bp-detail-body" data-review-content></div>
+    <footer class="bp-detail-footer"><button class="button" type="button" data-review-back>{{ 'Back to edit' }}</button><button class="button button--primary" type="button" data-commit-builder>{{ 'Confirm' }}</button></footer>
+  </dialog>
+</div>

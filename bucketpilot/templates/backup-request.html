@@ -1,0 +1,16 @@
+<section class="bp-card bp-request-card" data-bp-request>
+  <div class="bp-card-heading"><div><p class="bp-eyebrow">SAVED BACKUP REQUEST</p><h2>{{ backup.name }}</h2></div><span class="bp-status" data-request-status data-bp-tone="{{ backup.tone }}">{{ backup.status_label }}</span></div>
+  <div class="bp-notice" role="status" aria-live="polite"><div><strong data-request-label>{{ backup.waiting.label }}</strong><p data-request-message>{{ backup.waiting.message }}</p></div></div>
+  <p class="bp-error-text" data-request-error {% if not backup.error %}hidden{% endif %}>{{ backup.error }}</p>
+  <dl class="bp-request-meta">
+    <div><dt>Request ID</dt><dd>{{ backup.id }}</dd></div><div><dt>Requested</dt><dd>{{ backup.dates.created }}</dd></div>
+    <div><dt>Bucket</dt><dd>{{ backup.bucket }}</dd></div><div><dt>Destination</dt><dd>{{ backup.prefix }}</dd></div>
+  </dl>
+  <p data-request-retry {% if not backup.next_attempt %}hidden{% endif %}>Next retry check: <span>{{ backup.next_retry_date }} UTC</span></p>
+  <div class="form-actions">
+    <a class="button" href="{{ links.history }}">Back to history</a>
+    <a class="button" href="/bucketpilot/schedules">Review schedules</a>
+    <a class="button" href="{{ route }}">Refresh status</a>
+    <a class="button bp-button-danger" href="{{ links.cancel }}">Cancel backup</a>
+  </div>
+</section>

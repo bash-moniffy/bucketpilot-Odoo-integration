@@ -1,0 +1,21 @@
+html { min-height: 100%; }
+body { margin: 0; background: #f4f6fa; }
+.bucketpilot-ui { max-width: 1480px; margin: 0 auto; padding: 24px; }
+.bucketpilot-ui .bp-shell-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.bucketpilot-ui .visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; clip-path: inset(50%) !important; white-space: nowrap !important; overflow: hidden !important; }
+.bucketpilot-ui .bp-audit-control { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+.bucketpilot-ui .bp-connection-card form { margin-top: 12px; }
+.bucketpilot-ui .bp-connection-card input[type=password] { width: min(100%, 520px); }
+@media (max-width: 640px) { .bucketpilot-ui { padding: 12px; } }
+
+.bp-embedded-page { background: #fff; }
+@layer bucketpilot.components {
+  .bp-embedded-page .bucketpilot-ui {
+    width: calc(100% - 48px) !important;
+  }
+  @media (max-width: 760px) {
+    .bp-embedded-page .bucketpilot-ui {
+      width: calc(100% - 24px) !important;
+    }
+  }
+}

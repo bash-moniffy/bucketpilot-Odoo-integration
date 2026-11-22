@@ -1,0 +1,15 @@
+<section class="bp-card">
+  <h2>{{ 'Cancel backup' if operation == 'cancel' else 'Resume backup' }}</h2>
+  <p>{{ run.name }}</p>
+  <p>{{ 'Stop the execution and keep uploaded objects.' if operation == 'cancel' else 'Continue from the saved file checkpoints.' }}</p>
+  {% if error %}<p class="bp-builder-alert" role="alert">{{ error }}</p>{% endif %}
+  <form method="post" class="form-actions">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+    <input type="hidden" name="request_id" value="{{ request_id }}">
+    <input type="hidden" name="confirmed" value="yes">
+    <a class="button" href="/bucketpilot/history/{{ run.public_id }}">Back</a>
+    <button class="button {{ 'bp-button-danger' if operation == 'cancel' else 'button--primary' }}">
+      {{ 'Cancel backup' if operation == 'cancel' else 'Resume backup' }}
+    </button>
+  </form>
+</section>

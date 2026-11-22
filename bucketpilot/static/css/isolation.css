@@ -1,0 +1,55 @@
+/* Important component declarations precede the reset layer in priority.
+ * Both are strictly limited to this shell; user accessibility styles still win.
+ */
+@layer bucketpilot.visibility, bucketpilot.components, bucketpilot.reset;
+@layer bucketpilot.reset {
+  .bucketpilot-ui {
+    isolation: isolate !important;
+    padding: 0 !important;
+    text-align: start !important;
+    color-scheme: light !important;
+    --bp-unit: 16px !important;
+  }
+  .bucketpilot-ui :where(*) {
+    box-sizing: border-box !important;
+    font-family: inherit !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+    font-weight: revert !important;
+    color: inherit !important;
+    margin: revert !important;
+    padding: revert !important;
+    border: revert !important;
+    border-radius: revert !important;
+    background: revert !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    text-decoration: revert !important;
+    display: revert !important;
+    position: revert !important;
+    width: revert !important;
+    height: revert !important;
+    min-width: revert !important;
+    min-height: revert !important;
+    max-width: revert !important;
+    max-height: revert !important;
+    float: none !important;
+    opacity: revert !important;
+    appearance: auto !important;
+  }
+  .bucketpilot-ui :where(*)::before,
+  .bucketpilot-ui :where(*)::after {
+    content: none !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* Native visibility beats every component display rule, including later assets. */
+@layer bucketpilot.visibility {
+  /* Also suppress a toggle from markup cached before responsive was disabled. */
+  .bucketpilot-ui .tableresponsive-toggle-columns { display: none !important; }
+  .bucketpilot-ui [hidden],
+  .bucketpilot-ui dialog:not([open]) { display: none !important; }
+}

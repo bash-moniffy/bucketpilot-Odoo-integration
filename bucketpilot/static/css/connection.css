@@ -1,0 +1,199 @@
+@layer bucketpilot.visibility, bucketpilot.components, bucketpilot.reset;
+@layer bucketpilot.components {
+  /* Connection controls stay compact without changing other BucketPilot pages. */
+  .bucketpilot-ui .bp-connection-form {
+    gap: 16px !important;
+    align-items: start !important;
+  }
+  .bucketpilot-ui .bp-connection-form .bp-card {
+    margin: 0 !important;
+    padding: 20px !important;
+  }
+  .bucketpilot-ui .bp-connection-panel {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 14px 18px !important;
+  }
+  .bucketpilot-ui .bp-connection-panel > h2,
+.bucketpilot-ui .bp-connection-panel > :is(.bucketpilot-configured-key, .bp-connection-state, .bp-disconnect-panel) {
+    grid-column: 1 / -1 !important;
+  }
+  .bucketpilot-ui .bp-connection-form h2 {
+    font-size: 16px !important;
+  }
+  .bucketpilot-ui .bp-connection-form .form-item {
+    margin: 0 !important;
+    font-size: 13px !important;
+  }
+  .bucketpilot-ui .bp-connection-form .form-item > label {
+    margin-bottom: 4px !important;
+  }
+  .bucketpilot-ui .bp-connection-form .bucketpilot-configured-key {
+    padding: 10px 12px !important;
+  }
+  .bucketpilot-ui .bp-connection-form .bp-connection-state {
+    padding: 10px 12px !important;
+    border-radius: 8px !important;
+  }
+  .bucketpilot-ui .bp-key-panel > h2 {
+    margin-bottom: 12px !important;
+  }
+  .bucketpilot-ui .bp-key-panel > .form-item-api-key {
+    margin-top: 14px !important;
+  }
+  .bucketpilot-ui .bp-key-panel .form-actions {
+    margin-top: 12px !important;
+  }
+  .bucketpilot-ui .bp-connection-panel details.bp-disconnect-panel {
+    margin: 0 !important;
+    padding: 10px 0 0 !important;
+    border: 0 !important;
+    border-top: 1px solid #e6eaee !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  .bucketpilot-ui .bp-disconnect-panel summary {
+    font-size: 12px !important;
+    color: #992738 !important;
+  }
+  .bucketpilot-ui .bp-disconnect-panel[open] summary {
+    margin-bottom: 10px !important;
+  }
+  .bucketpilot-ui .bp-disconnect-panel .details-wrapper {
+    display: grid !important;
+    gap: 10px !important;
+    font-size: 12px !important;
+  }
+  .bucketpilot-ui .bp-disconnect-panel .button {
+    justify-self: start !important;
+  }
+  .bucketpilot-ui .bp-email-panel {
+    grid-column: 1 / -1 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 12px 24px !important;
+    align-items: start !important;
+  }
+  .bucketpilot-ui .bp-email-panel > .bp-status {
+    justify-self: end !important;
+  }
+  .bucketpilot-ui .bp-email-panel > h2 {
+    align-self: center !important;
+  }
+  .bucketpilot-ui .bp-email-panel .form-item {
+    min-width: 0 !important;
+  }
+  .bucketpilot-ui .bp-email-panel .bp-email-note {
+    grid-column: 1 / -1 !important;
+    color: #586474 !important;
+    font-size: 12px !important;
+    padding-top: 10px !important;
+    border-top: 1px solid #e6eaee !important;
+  }
+  .bucketpilot-ui .bp-request-meta {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+    margin: 18px 0 !important;
+  }
+  .bucketpilot-ui .bp-request-meta dt {
+    color: #586474 !important;
+    font-size: 12px !important;
+  }
+  .bucketpilot-ui .bp-request-meta dd {
+    margin: 4px 0 0 !important;
+    font-size: 13px !important;
+    overflow-wrap: anywhere !important;
+  }
+  .bucketpilot-ui .bp-request-card .bp-muted {
+    margin-top: 12px !important;
+    font-size: 12px !important;
+  }
+  @media (max-width: 760px) {
+    .bucketpilot-ui .bp-connection-form {
+      grid-template-columns: minmax(0, 1fr) !important;
+    }
+    .bucketpilot-ui .bp-email-panel {
+      grid-template-columns: minmax(0, 1fr) !important;
+    }
+    .bucketpilot-ui .bp-email-panel > .bp-status {
+      justify-self: start !important;
+    }
+  }
+  @media (max-width: 420px) {
+    .bucketpilot-ui :is(.bp-connection-panel, .bp-request-meta) {
+      grid-template-columns: minmax(0, 1fr) !important;
+    }
+  }
+}
+@layer bucketpilot.components {
+  .bucketpilot-ui .bp-disconnect-panel summary {
+    display: flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+  }
+  .bucketpilot-ui .bp-disconnect-panel summary::before {
+    content: '' !important;
+    display: inline-block !important;
+    width: 12px !important;
+    height: 12px !important;
+    background: currentColor !important;
+    mask: var(--bp-chevron-icon) center / contain no-repeat !important;
+  }
+  .bucketpilot-ui .bp-disconnect-panel[open] summary::before { transform: rotate(90deg) !important; }
+}
+
+.bp-connection-page { background: #fff; }
+.bp-odoo-breadcrumb {
+  background: #f1f2f8;
+  color: #141b24;
+  font: 650 13px/20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  padding: 12px clamp(16px, 2.6vw, 48px);
+}
+.bp-odoo-breadcrumb ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.bp-odoo-breadcrumb li + li::before { content: '›'; margin-inline-end: 14px; }
+.bp-odoo-breadcrumb a { color: inherit; text-decoration: none; }
+.bp-odoo-breadcrumb a:hover { text-decoration: underline; }
+
+@layer bucketpilot.components {
+  .bp-connection-page .bucketpilot-ui {
+    width: calc(100% - 48px) !important;
+  }
+  .bp-connection-page .bp-connection-form > [role="alert"] {
+    grid-column: 1 / -1 !important;
+  }
+  .bp-connection-page .bp-connection-form :is(.form-item__label, .form-item > label) {
+    display: block !important;
+    margin: 0 0 4px !important;
+    color: #24384c !important;
+    font: 600 12px/20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+    letter-spacing: normal !important;
+  }
+  .bp-connection-page .bp-connection-form .form-item {
+    line-height: 20px !important;
+  }
+  .bp-connection-page .bp-connection-panel .bucketpilot-configured-key code {
+    font: inherit !important;
+    letter-spacing: inherit !important;
+  }
+  .bp-connection-page .bp-disconnect-panel summary::before {
+    display: none !important;
+  }
+  .bp-connection-page .bp-email-note {
+    margin: 0 !important;
+    padding-top: 10px !important;
+  }
+  @media (max-width: 760px) {
+    .bp-connection-page .bucketpilot-ui {
+      width: calc(100% - 24px) !important;
+    }
+  }
+}

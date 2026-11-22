@@ -1,0 +1,110 @@
+@layer bucketpilot.visibility, bucketpilot.components, bucketpilot.reset;
+@layer bucketpilot.components {
+  /* Shared, module-scoped presentation for server and AJAX tables. */
+  .bucketpilot-ui {
+    --bp-cell-max: clamp(calc(var(--bp-unit, 16px) * 10), 17vw, calc(var(--bp-unit, 16px) * 22)) !important;
+  }
+  .bucketpilot-ui .bp-cell-measure {
+    position: fixed !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    inline-size: var(--bp-cell-max) !important;
+    block-size: 0 !important;
+    overflow: hidden !important;
+  }
+  .bucketpilot-ui table {
+    table-layout: auto !important;
+  }
+  .bucketpilot-ui table :is(th, td), .bucketpilot-ui table tbody td {
+    white-space: nowrap !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+  .bucketpilot-ui table tbody td :is(p, small, strong, .form-item) {
+    display: inline !important;
+    margin-block: 0 !important;
+  }
+  .bucketpilot-ui table small + small::before,
+.bucketpilot-ui table :is(strong, span) + small::before {
+    content: ' · ' !important;
+    color: #586474 !important;
+  }
+  .bucketpilot-ui table :is(button, .button) {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+  .bucketpilot-ui table .bp-record-actions {
+    flex-wrap: nowrap !important;
+    min-width: max-content !important;
+  }
+  .bucketpilot-ui .bp-cell-value {
+    position: relative !important;
+    display: inline-block !important;
+    max-inline-size: var(--bp-cell-max) !important;
+    vertical-align: middle !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+  }
+  .bucketpilot-ui .bp-cell-value[data-truncated] {
+    inline-size: var(--bp-cell-max) !important;
+    cursor: help !important;
+  }
+  .bucketpilot-ui .bp-cell-value:focus-visible {
+    outline: 2px solid #b34b10 !important;
+    outline-offset: 2px !important;
+  }
+  .bucketpilot-ui .bp-full-value-dialog {
+    width: min(680px, 90vw) !important;
+  }
+  .bucketpilot-ui .bp-full-value-dialog textarea {
+    width: 100% !important;
+    margin-block: 12px !important;
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+  }
+  .bucketpilot-ui .bp-table-scroll, .bucketpilot-ui .bp-tree-scroll, .bucketpilot-ui .bp-bucket-picker-scroll {
+    position: relative !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+  }
+  .bucketpilot-ui .bp-bucket-table {
+    min-width: max-content !important;
+  }
+  .bucketpilot-ui .bp-refresh-icon {
+    display: inline-grid !important;
+    place-items: center !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 7px !important;
+    flex: 0 0 auto !important;
+  }
+  .bucketpilot-ui .bp-refresh-icon svg {
+    display: block !important;
+    flex-shrink: 0 !important;
+    transform-origin: center !important;
+  }
+  .bucketpilot-ui .bp-refresh-icon:is([aria-busy="true"], .bp-ajax-pending) svg {
+    animation: bp-refresh-spin 1s linear infinite !important;
+  }
+  .bucketpilot-ui button.bp-refresh-icon::after {
+    content: none !important;
+    display: none !important;
+  }
+  @keyframes bp-refresh-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bucketpilot-ui .bp-refresh-icon:is([aria-busy="true"], .bp-ajax-pending) svg {
+      animation: none !important;
+      opacity: .55 !important;
+    }
+  }
+  .bucketpilot-ui :is(.bp-builder, .bp-records) button.bp-refresh-icon {
+    padding: 7px !important;
+    min-height: 36px !important;
+  }
+}

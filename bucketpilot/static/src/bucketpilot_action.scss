@@ -1,0 +1,10 @@
+.o_action_manager > .o_bucketpilot_action {
+    height: 100%;
+    min-height: 0;
+    background-color: var(--o-view-background-color, #fff);
+}
+
+.o_bucketpilot_action > iframe {
+    display: block;
+    min-height: 0;
+}

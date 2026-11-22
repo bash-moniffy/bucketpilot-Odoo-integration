@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ title }} · BucketPilot</title>
+{% for stylesheet in styles %}<link rel="stylesheet" href="/bucketpilot/static/css/{{ stylesheet }}.css">{% endfor %}
+<link rel="icon" href="/bucketpilot/static/description/icon.png">
+<script type="application/json" id="bp-settings">{{ settings|tojson }}</script>
+{% for script in scripts %}<script defer src="/bucketpilot/static/js/{{ script }}.js"></script>{% endfor %}
+</head><body class="{{ 'bp-connection-page' if active == 'connection' }}{{ ' bp-embedded-page' if embedded }}">
+{% if active == 'connection' and not embedded %}
+<nav class="bp-odoo-breadcrumb" aria-label="Breadcrumb">
+  <ol>
+    <li><a href="/odoo">Odoo</a></li>
+    <li><a href="/bucketpilot">BucketPilot</a></li>
+    <li aria-current="page">Connection</li>
+  </ol>
+</nav>
+{% endif %}
+{# Shared layout. API values and connection metadata remain autoescaped. #}
+<section class="bucketpilot-ui" aria-label="{{ 'BucketPilot administration' }}">
+  <header class="bp-header">
+    <div class="bp-brand"><img class="bp-brand-logo" src="{{ logo_url }}" alt="BucketPilot" width="190" height="40"><span class="bp-brand-caption">{{ 'ODOO INTEGRATION' }}</span></div>
+    <div class="bp-header-context"><span class="bp-status bp-status--{{ connection.status }}" data-bp-connection data-bp-tone="{{ connection.tone }}">{{ connection.label }}</span><span class="bp-header-workspace" data-bp-workspace>{{ connection.workspace or '—' }}</span></div>
+    {% if embedded or active == 'connection' %}
+    <a class="button button--primary bp-portal-link bucketpilot-portal" href="https://bucketpilot.io/" target="_blank" rel="noopener noreferrer">Go to BucketPilot</a>
+    {% else %}
+    <div class="bp-shell-links"><a class="button" href="/odoo">Odoo</a><a class="button button--primary bp-portal-link" href="https://bucketpilot.io/" target="_blank" rel="noopener noreferrer">Open BucketPilot</a></div>
+    {% endif %}
+  </header>
+  <nav class="bp-nav" aria-label="{{ 'BucketPilot navigation' }}">
+    {% for item in navigation %}<a href="{{ item.url }}"{% if item.active %} class="is-active" aria-current="page"{% endif %}>{{ item.label }}</a>{% endfor %}
+  </nav>
+  <div class="bp-page-heading"><div><p class="bp-eyebrow">{{ 'WORKSPACE / ODOO' }}</p><h1>{{ title }}</h1><p class="bp-description">{{ description }}</p></div><span class="bp-integration-label">{{ 'BucketPilot for Odoo' }}</span></div>
+  <div class="bp-content">{% include template %}</div>
+  <footer class="bp-footer"><span>{{ 'BucketPilot · Secure storage, connected.' }}</span><span>{{ 'Project sources stay within your approved backup boundary.' }}</span></footer>
+</section>
+</body></html>

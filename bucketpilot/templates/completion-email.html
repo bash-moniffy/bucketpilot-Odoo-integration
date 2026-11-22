@@ -1,0 +1,57 @@
+<div style="display:none;max-height:0;overflow:hidden;">{{ report.plan }} — {{ report.status_label }} · {{ report.successful }} files uploaded · {{ report.uploaded }}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f5f8;color:#172536;font-family:Arial,Helvetica,sans-serif;"><tr><td align="center" style="padding:32px 12px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;background:#ffffff;border:1px solid #dce3eb;border-radius:16px;overflow:hidden;">
+      <tr><td style="height:5px;background:#f76b0b;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+      <tr><td style="padding:28px 28px 20px;border-bottom:1px solid #e6ebf1;">
+        <div style="font-size:28px;font-weight:bold;letter-spacing:-1px;">bucket<span style="color:#f76b0b;">pilot</span></div>
+        <div style="margin-top:7px;font-size:10px;letter-spacing:2px;color:#66758a;">ODOO BACKUP REPORT</div>
+      </td></tr>
+      <tr><td style="padding:26px 28px 22px;">
+        <span style="display:inline-block;padding:6px 12px;border-radius:20px;background:{{ report.background }};color:{{ report.color }};font-size:12px;font-weight:bold;">{{ report.status_label }}</span>
+        <h1 style="margin:16px 0 8px;font-size:24px;line-height:1.35;word-break:break-word;">{{ report.plan }}</h1>
+        <p style="margin:0;color:#617086;font-size:14px;line-height:1.7;">{{ report.headline }}</p>
+        <p style="margin:10px 0 0;font-size:12px;color:#617086;">{{ report.site }}</p>
+      </td></tr>
+      <tr><td style="padding:0 20px 24px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f8fb;border:1px solid #e5eaf0;border-radius:10px;"><tr>
+          {% for label, value in [('Uploaded files', report.successful), ('Uploaded data', report.uploaded), ('Failed files', report.failed), ('Skipped files', report.skipped)] %}
+            <td width="25%" valign="top" style="padding:16px 8px;text-align:center;"><div style="font-size:20px;line-height:1.4;font-weight:bold;color:{{ '#a12e40' if label == 'Failed files' and value else '#172536' }};">{{ value }}</div><div style="margin-top:5px;font-size:10px;line-height:1.5;color:#617086;">{{ label }}</div></td>
+          {% endfor %}
+        </tr></table>
+      </td></tr>
+      <tr><td style="padding:0 28px 24px;">
+        <h2 style="margin:0 0 12px;font-size:11px;letter-spacing:1px;color:#617086;">DESTINATION</h2>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;line-height:1.6;">
+          <tr><td width="90" valign="top" style="padding:6px 0;color:#617086;">Bucket</td><td style="padding:6px 0;font-weight:bold;word-break:break-word;">{{ report.bucket }}</td></tr>
+          <tr><td valign="top" style="padding:6px 0;color:#617086;">Folder</td><td style="padding:6px 0;word-break:break-all;">{{ report.folder }}</td></tr>
+        </table>
+      </td></tr>
+      <tr><td style="padding:0 28px 24px;">
+        <h2 style="margin:0 0 12px;font-size:11px;letter-spacing:1px;color:#617086;">EXECUTION DETAILS</h2>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:12px;line-height:1.6;">
+          {% for label, value in [('Frequency', report.frequency), ('Execution', report.execution_type), ('Requested', report.requested), ('Started', report.started), ('Completed', report.completed), ('Duration', report.duration), ('Timezone', report.timezone)] %}
+            <tr><td width="100" valign="top" style="padding:7px 0;border-bottom:1px solid #edf0f4;color:#617086;">{{ label }}</td><td style="padding:7px 0;border-bottom:1px solid #edf0f4;word-break:break-word;">{{ value }}</td></tr>
+          {% endfor %}
+        </table>
+        {% if report.error or report.scan_errors %}<div style="margin-top:18px;padding:12px 14px;border:1px solid #f0d1d7;border-radius:8px;background:#fff6f7;color:#a12e40;font-size:12px;line-height:1.7;word-break:break-word;">{% if report.error %}{{ report.error }}{% endif %}{% if report.scan_errors %}<div>Discovery issues: {{ report.scan_errors }}</div>{% endif %}</div>{% endif %}
+      </td></tr>
+      <tr><td style="padding:0 28px 24px;">
+        <h2 style="margin:0 0 12px;font-size:11px;letter-spacing:1px;color:#617086;">SOURCES</h2>
+        <div style="padding:10px 12px;border:1px solid #e5eaf0;border-radius:8px;">
+          {% for group, sources in report.sources.items() %}{% if sources %}
+            <div style="margin:4px 0 12px;">
+              <h3 style="margin:0 0 6px;font-size:11px;line-height:1.6;color:{{ '#206640' if group == 'included' else '#93520b' }};">{{ 'Included' if group == 'included' else 'Excluded' }} ({{ sources|length }})</h3>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="table-layout:fixed;font-size:12px;line-height:1.6;">
+                {% for source in sources %}<tr><td width="24" valign="top" style="padding:4px 0;color:#d75b0b;"><span role="img" aria-label="{{ 'Folder' if source.directory else 'File' }}">{{ '📁' if source.directory else '📄' }}</span></td><td style="padding:4px 0;word-break:break-all;overflow-wrap:anywhere;font-family:Consolas,monospace;color:#24364b;">{{ source.path }}</td></tr>{% endfor %}
+              </table>
+            </div>
+          {% endif %}{% endfor %}
+          {% if not (report.sources.included or report.sources.excluded) %}<p style="margin:4px 0;color:#617086;font-size:12px;line-height:1.6;">No source information recorded.</p>{% endif %}
+        </div>
+        <p style="margin:8px 0 0;font-size:10px;line-height:1.6;color:#617086;">Saved source selection for this execution. Confirmed upload totals are shown above.</p>
+      </td></tr>
+      <tr><td style="padding:0 28px 28px;"><a href="{{ report.details_url }}" style="display:inline-block;padding:13px 20px;background:#f76b0b;border-radius:8px;color:#172536;font-size:13px;font-weight:bold;text-decoration:none;">{{ report.details_label }}</a><p style="margin:14px 0 0;font-size:10px;color:#617086;line-height:1.6;word-break:break-all;">Backup ID: {{ report.id }}</p></td></tr>
+      <tr><td style="padding:18px 28px;border-top:1px solid #e6ebf1;background:#fafbfd;color:#617086;font-size:11px;line-height:1.7;">Sent by {{ report.site }} through its configured mail service.<br>BucketPilot · Secure storage, connected.</td></tr>
+    </table>
+    <p style="max-width:600px;margin:16px 0 0;font-size:10px;line-height:1.6;color:#78869a;">This report describes the recorded backup outcome. Uploaded totals count confirmed successful files.</p>
+  </td></tr></table>

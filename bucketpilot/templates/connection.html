@@ -1,0 +1,58 @@
+{% macro item(label, value, classes='', tone='', monospace=false) %}
+<div class="form-item {{ classes }}"{% if tone %} data-bp-tone="{{ tone }}"{% endif %}>
+  <div class="form-item__label">{{ label }}</div>
+  {% if monospace %}<code>{{ value }}</code>{% else %}<div>{{ value }}</div>{% endif %}
+</div>
+{% endmacro %}
+<div class="bp-connection-form">
+  {% if notice %}<p data-bp-save-message hidden>{{ notice }}</p>{% endif %}
+  {% if error %}<p class="bp-builder-alert" role="alert">{{ error }}</p>{% endif %}
+  <section class="bp-card bp-connection-panel">
+    <h2>Your connection</h2>
+    {{ item('Configured API key', connection.masked or 'Not configured', 'bucketpilot-configured-key', monospace=true) }}
+    {% if connection.masked %}
+      {{ item('Connected workspace', connection.workspace or 'Not available') }}
+      {% for key, label in [('plan','Workspace plan'), ('rate','Requests per minute'), ('key_name','API key label')] %}
+        {% if connection[key] %}{{ item(label, connection[key]) }}{% endif %}
+      {% endfor %}
+    {% endif %}
+    {{ item('Connection status', connection_message, 'bp-connection-state', connection.tone) }}
+    {% if connection.masked %}
+    <details class="bp-danger-zone bp-disconnect-panel">
+      <summary>Disconnect this site</summary>
+      <div class="details-wrapper">
+        <p>Remove the saved API key. Backups that need this connection will wait for the original key.</p>
+        <form method="post" data-bp-confirm-action="Disconnect this BucketPilot workspace?">
+          <input type="hidden" name="csrf_token" value="{{ csrf }}">
+          <input type="hidden" name="operation" value="disconnect">
+          <input type="hidden" name="confirmed" value="yes">
+          <button class="button bp-button-danger">Disconnect</button>
+        </form>
+      </div>
+    </details>
+    {% endif %}
+  </section>
+  <section class="bp-card bp-key-panel">
+    <h2>{{ 'Replace your API key' if connection.masked else 'Connect your workspace' }}</h2>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf }}">
+      <input type="hidden" name="operation" value="connect">
+      <p>Create an API key in BucketPilot Settings → API keys. Use read/write access for backups; read-only access supports browsing. Keys are validated before saving.</p>
+      <div class="form-item form-item-api-key">
+        <label for="bp-api-key">API key</label>
+        <input id="bp-api-key" name="api_key" type="password" autocomplete="new-password" spellcheck="false" maxlength="4096" aria-describedby="bp-api-key-description" required {{ 'disabled' if connection.storage_unavailable }}>
+        <p class="form-item__description" id="bp-api-key-description">Your key stays on the server. A replacement is stored only after successful validation.</p>
+      </div>
+      <div class="form-actions">
+        <button class="button button--primary" {{ 'disabled' if connection.storage_unavailable }}>Validate and connect</button>
+      </div>
+    </form>
+  </section>
+  <section class="bp-card bp-email-panel">
+    <h2>Backup email notifications</h2>
+    <span class="bp-status" data-bp-tone="{{ 'success' if email_ready else 'neutral' }}">{{ 'SMTP configured' if email_ready else 'Inactive' }}</span>
+    {{ item('Recipient', recipient or 'Set an email address for the main company in Odoo.') }}
+    {{ item('Delivery', 'Completion reports are sent through the Odoo mail queue.' if email_ready else 'No supported SMTP sender is configured. Backups continue normally.') }}
+    <p class="bp-email-note">Email failures never change backup results. Formatting follows your mail service settings.</p>
+  </section>
+</div>

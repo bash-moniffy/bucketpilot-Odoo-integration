@@ -1,0 +1,10 @@
+  {% if not buckets_only %}
+  <div class="bp-metrics">
+    {% for title, value, help, icon in [('Connection', connection_label, 'Secure API connection', '↗'), ('Active workspace', snapshot.workspace or 'Not available', snapshot.type or 'Connect your workspace to begin', '◫'), ('Total buckets', total_buckets if snapshot.status == 'connected' else '—', 'In the connected workspace', '▱'), ('Workspace plan', snapshot.plan or 'Not available', 'Reported by BucketPilot', '◇')] %}
+    <article class="bp-metric"><span class="bp-metric-icon {{ 'bp-icon-accent' if loop.index is even }}" aria-hidden="true">{{ icon }}</span><p>{{ title }}</p><h2>{{ value }}</h2><span>{{ help }}</span></article>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <div class="bp-notice bp-notice--{{ snapshot.status }}" role="status" data-dashboard-notice>
+    <span class="bp-notice-dot" aria-hidden="true"></span><div><strong>{{ 'Your workspace is connected' if snapshot.status == 'connected' else 'Connection status' }}</strong><p>{{ snapshot.message }}{% if stamp != '—' %} <span class="bp-muted">Last checked {{ stamp }} UTC</span>{% endif %}</p></div>
+  </div>

@@ -1,0 +1,11 @@
+<odoo>
+    <record id="action_bucketpilot_app" model="ir.actions.client">
+        <field name="name">BucketPilot</field>
+        <field name="tag">bucketpilot.app</field>
+        <field name="path">bucketpilot</field>
+        <field name="target">current</field>
+    </record>
+    <menuitem id="menu_bucketpilot" name="BucketPilot" action="action_bucketpilot_app"
+              groups="base.group_system,bucketpilot.group_backup_operator"
+              web_icon="bucketpilot,static/description/icon.png" sequence="90"/>
+</odoo>

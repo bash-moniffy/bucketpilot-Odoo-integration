@@ -1,0 +1,18 @@
+<div class="bp-table-scroll" role="region" aria-label="Workspace bucket results" tabindex="0">
+  <table class="bp-bucket-table"><thead><tr>{% for label in ['ID', 'Bucket', 'Provider', 'Region', 'Objects', 'Size (bytes)', 'Index status', 'Indexed objects', 'Last indexed', 'Created'] %}<th scope="col">{{ label }}</th>{% endfor %}</tr></thead>
+    <tbody>{% for row in rows %}<tr>
+      <td>{{ row.id or '—' }}</td><td><strong>{{ row.name or '—' }}</strong></td><td>{{ row.provider or '—' }}</td><td>{{ row.region or '—' }}</td>
+      <td>{{ row.objectCount or '—' }}</td><td>{{ row.totalSizeBytes or '—' }}</td>
+      <td><span class="bp-job-status" data-bp-tone="{{ tones.get(row.indexStatus, 'neutral') }}">{{ 'Not indexed' if row.indexStatus == 'not_applicable' else ((row.indexStatus|replace('_', ' ')|capitalize) if row.indexStatus else '—') }}</span></td>
+      <td>{{ row.indexedObjectCount or '—' }}</td><td>{{ row.lastIndexedAt or '—' }}</td><td>{{ row.createdAt or '—' }}</td>
+    </tr>{% else %}<tr><td colspan="10">{{ 'No matching buckets.' if snapshot.status == 'connected' else 'Bucket directory unavailable.' }}</td></tr>{% endfor %}</tbody>
+  </table>
+</div>
+<p class="bp-results-summary" role="status">{{ total }} results <span class="bp-muted">· Page {{ page + 1 }} of {{ pages }}</span></p>
+<div class="bp-pagination">
+  <div class="bp-page-size"><label for="bp-bucket-size">Records per page</label><select id="bp-bucket-size" name="size" form="bp-bucket-filter-form">{% for count in [10,25,50] %}<option value="{{ count }}" {% if count == size %}selected{% endif %}>{{ count }}</option>{% endfor %}</select></div>
+  {% if pages > 1 %}<nav class="bp-pager-actions" aria-label="Bucket result pages">
+    {% if page > 0 %}<a class="button bp-page-control bp-page-previous" data-page="{{ page - 1 }}" href="?q={{ q|urlencode }}&amp;size={{ size }}&amp;page={{ page - 1 }}">Previous</a>{% endif %}
+    {% if page + 1 < pages %}<a class="button bp-page-control bp-page-next" data-page="{{ page + 1 }}" href="?q={{ q|urlencode }}&amp;size={{ size }}&amp;page={{ page + 1 }}">Next</a>{% endif %}
+  </nav>{% endif %}
+</div>

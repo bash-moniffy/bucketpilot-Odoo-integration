@@ -1,0 +1,1329 @@
+@layer bucketpilot.visibility, bucketpilot.components, bucketpilot.reset;
+@layer bucketpilot.components {
+  /* Builder-only components; the shared branded header is intentionally unchanged. */
+  .bucketpilot-ui [hidden] {
+    display: none !important;
+  }
+  .bucketpilot-ui .bp-builder {
+    --bp-builder-accent: #a84315 !important;
+  }
+  .bucketpilot-ui .bp-builder-toolbar {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 12px !important;
+    margin-bottom: 18px !important;
+  }
+  .bucketpilot-ui .bp-builder-toolbar > div {
+    margin-inline-end: auto !important;
+  }
+  .bucketpilot-ui .bp-builder-toolbar p {
+    font-size: 12px !important;
+    color: #586474 !important;
+  }
+  .bucketpilot-ui .bp-draft-label {
+    font-size: 10px !important;
+    font-weight: 750 !important;
+    letter-spacing: .1em !important;
+    color: #a84315 !important;
+  }
+  .bucketpilot-ui .bp-save-state {
+    font-size: 12px !important;
+    font-weight: 650 !important;
+    color: #385c4a !important;
+  }
+  .bucketpilot-ui .bp-builder-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.35fr) minmax(330px, 1fr) !important;
+    gap: 20px !important;
+    align-items: start !important;
+  }
+  .bucketpilot-ui .bp-source-panel {
+    position: sticky !important;
+    top: 20px !important;
+    padding: 20px !important;
+  }
+  .bucketpilot-ui .bp-source-panel .bp-card-heading {
+    margin-bottom: 8px !important;
+  }
+  .bucketpilot-ui .bp-pill {
+    font-size: 10px !important;
+    background: #fff1e6 !important;
+    color: #8b431b !important;
+    border-radius: 14px !important;
+    padding: 4px 8px !important;
+    white-space: nowrap !important;
+  }
+  .bucketpilot-ui .bp-builder-hint {
+    color: #586474 !important;
+    font-size: 11px !important;
+    line-height: 1.6 !important;
+    margin-block: 9px 12px !important;
+  }
+  .bucketpilot-ui .bp-inline {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 7px !important;
+  }
+  .bucketpilot-ui .bp-inline input {
+    flex: 1 !important;
+    min-width: 140px !important;
+  }
+  .bucketpilot-ui .bp-builder :is(button, .button), .bucketpilot-ui .bp-records :is(button, .button) {
+    padding: 6px 11px !important;
+    min-height: 32px !important;
+    font-size: 11px !important;
+  }
+  .bucketpilot-ui .bp-builder :is(input:not([type="checkbox"]):not([type="radio"]), select) {
+    min-height: 36px !important;
+    font-size: 12px !important;
+    padding: 7px 10px !important;
+  }
+  .bucketpilot-ui .bp-explorer-search {
+    margin-block: 18px 12px !important;
+  }
+  .bucketpilot-ui .bp-tree-breadcrumb {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    font-size: 11px !important;
+    padding: 9px 0 !important;
+  }
+  .bucketpilot-ui .bp-tree-breadcrumb span {
+    flex: 1 !important;
+    font-family: ui-monospace, monospace !important;
+    min-width: 60px !important;
+  }
+  .bucketpilot-ui .bp-tree-scroll {
+    max-height: min(52vh, 520px) !important;
+    min-height: 270px !important;
+    overflow: auto !important;
+    border: 1px solid #d9dfe5 !important;
+    border-radius: 9px !important;
+    background: #fff !important;
+  }
+  .bucketpilot-ui .bp-builder-tree {
+    table-layout: auto !important;
+    min-width: 380px !important;
+  }
+  .bucketpilot-ui .bp-builder-tree thead {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1 !important;
+  }
+  .bucketpilot-ui .bp-builder-tree th:first-child {
+    width: 48px !important;
+  }
+  .bucketpilot-ui .bp-builder-tree th:last-child {
+    width: 80px !important;
+  }
+  .bucketpilot-ui .bp-builder-tree :is(th,td) {
+    padding: 10px 12px !important;
+    font-size: 11px !important;
+  }
+  .bucketpilot-ui .bp-builder-tree .bp-source-selected {
+    background: #fff7f1 !important;
+  }
+  .bucketpilot-ui .bp-builder-tree input[type="checkbox"] {
+    width: 17px !important;
+    height: 17px !important;
+    accent-color: #a84315 !important;
+  }
+  .bucketpilot-ui .bp-builder .bp-source-link {
+    display: inline !important;
+    padding: 0 !important;
+    min-height: 24px !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: #a84315 !important;
+    text-align: start !important;
+  }
+  .bucketpilot-ui .bp-source-relative {
+    display: block !important;
+    color: #586474 !important;
+    font-size: 10px !important;
+    padding-block: 5px !important;
+  }
+  .bucketpilot-ui .bp-tree-actions {
+    margin-top: 10px !important;
+  }
+  .bucketpilot-ui .bp-builder-step {
+    padding: 16px !important;
+    margin: 0 0 12px !important;
+    border-radius: 11px !important;
+    box-shadow: 0 2px 5px #24384c04 !important;
+  }
+  .bucketpilot-ui .bp-builder-step > summary {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 9px !important;
+    font-size: 13px !important;
+    list-style: none !important;
+  }
+  .bucketpilot-ui .bp-builder-step > summary::-webkit-details-marker {
+    display: none !important;
+  }
+  .bucketpilot-ui .bp-builder-step > summary::after {
+    content: '⌄' !important;
+    margin-inline-start: auto !important;
+    color: #586474 !important;
+  }
+  .bucketpilot-ui .bp-builder-step > summary small {
+    display: block !important;
+    margin-top: 3px !important;
+    font-size: 10px !important;
+    font-weight: 450 !important;
+    color: #586474 !important;
+  }
+  .bucketpilot-ui .bp-step-number {
+    display: grid !important;
+    place-content: center !important;
+    flex-shrink: 0 !important;
+    width: 26px !important;
+    height: 26px !important;
+    background: #fff1e6 !important;
+    color: #a84315 !important;
+    border: 1px solid #f2cbb4 !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+  }
+  .bucketpilot-ui .bp-step-state {
+    color: #29644b !important;
+    font-size: 10px !important;
+    margin-inline-start: auto !important;
+    white-space: nowrap !important;
+  }
+  .bucketpilot-ui .bp-bucket-picker-scroll {
+    max-height: 235px !important;
+    overflow: auto !important;
+    border: 1px solid #d9dfe5 !important;
+    border-radius: 7px !important;
+    margin-block: 12px !important;
+  }
+  .bucketpilot-ui .bp-bucket-picker-scroll :is(th,td) {
+    height: auto !important;
+    padding: 6px 8px !important;
+    font-size: 10px !important;
+  }
+  .bucketpilot-ui .bp-compact-pager {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 12px !important;
+    font-size: 10px !important;
+  }
+  .bucketpilot-ui .bp-saved-card {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 12px !important;
+    background: #f5f8f6 !important;
+    border: 1px solid #d1e5d9 !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+  }
+  .bucketpilot-ui .bp-saved-card :is(strong,code) {
+    width: 100% !important;
+  }
+  .bucketpilot-ui .bp-saved-card .button {
+    margin-inline-start: auto !important;
+  }
+  .bucketpilot-ui .bp-destination-preview {
+    font: 10px/1.7 ui-monospace, monospace !important;
+    color: #586474 !important;
+    background: #f5f7f9 !important;
+    padding: 10px !important;
+    border-radius: 7px !important;
+    margin-top: 12px !important;
+    overflow-wrap: anywhere !important;
+  }
+  .bucketpilot-ui .bp-folder-list {
+    max-height: 160px !important;
+    overflow: auto !important;
+    margin-block: 8px !important;
+  }
+  .bucketpilot-ui .bp-folder-list > div {
+    margin-bottom: 6px !important;
+  }
+  .bucketpilot-ui .bp-selection-list {
+    max-height: 215px !important;
+    overflow: auto !important;
+  }
+  .bucketpilot-ui .bp-rule {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    padding: 9px 0 !important;
+    border-bottom: 1px solid #e6eaee !important;
+    font-size: 11px !important;
+  }
+  .bucketpilot-ui .bp-rule > div {
+    min-width: 0 !important;
+  }
+  .bucketpilot-ui .bp-rule small {
+    display: block !important;
+    font-size: 10px !important;
+    color: #586474 !important;
+    margin-top: 3px !important;
+  }
+  .bucketpilot-ui .bp-rule-excluded {
+    color: #992738 !important;
+  }
+  .bucketpilot-ui .bp-rule-excluded small {
+    color: #992738 !important;
+  }
+  .bucketpilot-ui .bp-schedule-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+  .bucketpilot-ui .bp-schedule-grid .form-item {
+    margin-bottom: 6px !important;
+  }
+  .bucketpilot-ui .bp-builder-final {
+    position: relative !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 14px !important;
+    background: #fff !important;
+    border: 1px solid #d9dfe5 !important;
+    border-radius: 10px !important;
+    box-shadow: 0 4px 18px #24384c0c !important;
+  }
+  .bucketpilot-ui .bp-builder-final p {
+    width: 100% !important;
+    font-size: 11px !important;
+    color: #586474 !important;
+    margin-bottom: 4px !important;
+  }
+  .bucketpilot-ui .bp-builder-alert {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 12px 15px !important;
+    background: #fff5f5 !important;
+    color: #992738 !important;
+    border: 1px solid #ecd1d5 !important;
+    border-radius: 8px !important;
+    margin-bottom: 14px !important;
+    font-size: 12px !important;
+  }
+  .bucketpilot-ui .bp-review-dialog {
+    width: min(620px, 90vw) !important;
+    max-height: 85vh !important;
+    overflow: auto !important;
+    margin: auto !important;
+    padding: 24px !important;
+    border: 1px solid #d9dfe5 !important;
+    border-radius: 14px !important;
+    color: #141b24 !important;
+    background: #fff !important;
+    box-shadow: 0 16px 80px #24384c33 !important;
+  }
+  .bucketpilot-ui .bp-review-dialog::backdrop {
+    background: #18243180 !important;
+  }
+  .bucketpilot-ui .bp-review-dialog h2 {
+    margin-bottom: 15px !important;
+  }
+  .bucketpilot-ui .bp-review-dialog p {
+    margin-bottom: 9px !important;
+    font-size: 12px !important;
+  }
+  .bucketpilot-ui .bp-review-dialog small {
+    display: block !important;
+    font-size: 11px !important;
+    margin-block: 5px !important;
+  }
+  .bucketpilot-ui .bp-plan-dialog {
+    width: min(660px, calc(100vw - 32px)) !important;
+    padding: 0 !important;
+    outline: none !important;
+    box-sizing: border-box !important;
+  }
+  .bucketpilot-ui .bp-detail-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+    padding: 18px 24px !important;
+    border-bottom: 1px solid var(--bp-line) !important;
+  }
+  .bucketpilot-ui .bp-detail-header h2 {
+    margin: 0 !important;
+    font-size: 16px !important;
+  }
+  .bucketpilot-ui .bp-detail-close {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 0 0 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    background: #f1f4f7 !important;
+    color: var(--bp-muted) !important;
+    font-size: 24px !important;
+    cursor: pointer !important;
+  }
+  .bucketpilot-ui .bp-detail-close:hover {
+    background: #e5eaf0 !important;
+    color: var(--bp-ink) !important;
+  }
+  .bucketpilot-ui .bp-detail-body {
+    padding: 24px !important;
+  }
+  .bucketpilot-ui .bp-detail-hero {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    margin-bottom: 24px !important;
+  }
+  .bucketpilot-ui .bp-detail-hero h3 {
+    margin: 0 !important;
+    font-size: 22px !important;
+    line-height: 1.4 !important;
+    overflow-wrap: anywhere !important;
+    min-width: 0 !important;
+  }
+  .bucketpilot-ui .bp-detail-hero .bp-job-status {
+    flex-shrink: 0 !important;
+  }
+  .bucketpilot-ui .bp-detail-section + .bp-detail-section {
+    margin-top: 22px !important;
+  }
+  .bucketpilot-ui .bp-detail-section > h3 {
+    margin: 0 0 12px !important;
+    font-size: 11px !important;
+    text-transform: uppercase !important;
+    letter-spacing: .07em !important;
+    color: var(--bp-muted) !important;
+  }
+  .bucketpilot-ui .bp-detail-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 18px 24px !important;
+    margin: 0 !important;
+    padding: 16px !important;
+    background: var(--bp-surface) !important;
+    border: 1px solid #e9edf2 !important;
+    border-radius: 10px !important;
+  }
+  .bucketpilot-ui .bp-detail-grid dt {
+    margin: 0 0 5px !important;
+    font-size: 11px !important;
+    font-weight: 400 !important;
+    color: var(--bp-muted) !important;
+  }
+  .bucketpilot-ui .bp-detail-grid dd {
+    margin: 0 !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1.6 !important;
+    overflow-wrap: anywhere !important;
+  }
+  .bucketpilot-ui .bp-detail-error {
+    padding: 12px !important;
+    border-radius: 8px !important;
+    background: #fceef0 !important;
+    color: #a42639 !important;
+  }
+  .bucketpilot-ui .bp-detail-footer {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    justify-content: flex-end !important;
+    padding: 14px 24px !important;
+    border-top: 1px solid var(--bp-line) !important;
+    background: var(--bp-surface) !important;
+  }
+  .bucketpilot-ui .bp-plan-dialog[open] {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .bucketpilot-ui .bp-plan-dialog .bp-detail-body {
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+  }
+  .bucketpilot-ui .bp-plan-dialog :is(.bp-detail-header, .bp-detail-footer) {
+    flex-shrink: 0 !important;
+  }
+  @media (max-width: 540px) {
+    .bucketpilot-ui .bp-detail-grid {
+      grid-template-columns: 1fr !important;
+    }
+    .bucketpilot-ui .bp-detail-body {
+      padding: 18px !important;
+    }
+    .bucketpilot-ui .bp-detail-header, .bucketpilot-ui .bp-detail-footer {
+      padding-inline: 18px !important;
+    }
+  }
+  .bucketpilot-ui .bp-record-filters {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: flex-end !important;
+    gap: 10px !important;
+    margin-block: 20px !important;
+  }
+  .bucketpilot-ui .bp-record-filters > div:first-child {
+    flex: 1 !important;
+    min-width: 180px !important;
+  }
+  .bucketpilot-ui .bp-record-filters select {
+    min-width: 80px !important;
+  }
+  .bucketpilot-ui .bp-record-scroll {
+    max-height: 65vh !important;
+    overflow: auto !important;
+  }
+  .bucketpilot-ui .bp-record-scroll table {
+    table-layout: fixed !important;
+    width: 100% !important;
+    min-width: 850px !important;
+  }
+  .bucketpilot-ui .bp-record-scroll thead {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1 !important;
+  }
+  .bucketpilot-ui .bp-record-scroll small {
+    display: block !important;
+    color: #586474 !important;
+    font-size: 10px !important;
+    margin-top: 5px !important;
+  }
+  .bucketpilot-ui .bp-record-scroll :is(td,th) {
+    font-size: 11px !important;
+  }
+  .bucketpilot-ui .bp-record-actions {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 3px !important;
+    min-width: 0 !important;
+  }
+  @media (max-width: 1100px) {
+    .bucketpilot-ui .bp-builder-grid {
+      grid-template-columns: minmax(0,1fr) !important;
+    }
+    .bucketpilot-ui .bp-source-panel {
+      position: static !important;
+    }
+    .bucketpilot-ui .bp-tree-scroll {
+      max-height: 420px !important;
+    }
+  }
+  @media (max-width: 600px) {
+    .bucketpilot-ui .bp-source-panel {
+      padding: 14px 10px !important;
+    }
+    .bucketpilot-ui .bp-builder-step {
+      padding: 14px 10px !important;
+    }
+    .bucketpilot-ui .bp-schedule-grid {
+      grid-template-columns: minmax(0,1fr) !important;
+    }
+    .bucketpilot-ui .bp-builder-toolbar > div {
+      width: 100% !important;
+    }
+    .bucketpilot-ui .bp-config-panel {
+      min-width: 0 !important;
+    }
+  }
+  .bucketpilot-ui .bp-builder-tree td {
+    height: auto !important;
+  }
+  .bucketpilot-ui .bp-builder-tree input {
+    margin: 0 !important;
+  }
+  .bucketpilot-ui .bp-builder [data-path-form] > .button {
+    margin-block: 4px !important;
+  }
+  .bucketpilot-ui .bp-builder :is(input[type="date"], input[type="time"]) {
+    width: 100% !important;
+    border: 1px solid #bac4cf !important;
+    border-radius: 7px !important;
+    background: #fff !important;
+    color: #141b24 !important;
+  }
+  .bucketpilot-ui .bp-bucket-picker-scroll input[type="radio"] {
+    accent-color: #a84315 !important;
+    width: 16px !important;
+    height: 16px !important;
+    margin: 0 !important;
+  }
+  .bucketpilot-ui .bp-builder-step.bp-step-incomplete {
+    border: 1px solid #e8cc91 !important;
+    background: #fffdf7 !important;
+  }
+  .bucketpilot-ui .bp-step-incomplete .bp-step-state {
+    color: #805411 !important;
+  }
+  .bucketpilot-ui .bp-builder-step.bp-step-complete {
+    border: 1px solid #b9dbc7 !important;
+    background: #fbfefc !important;
+  }
+  .bucketpilot-ui [data-review-builder]:disabled {
+    opacity: 1 !important;
+    background: #e8edf1 !important;
+    color: #536170 !important;
+    border-color: #c5ced6 !important;
+    cursor: not-allowed !important;
+  }
+  .bucketpilot-ui .bp-folder-breadcrumbs {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 4px !important;
+    margin-block: 12px !important;
+  }
+  .bucketpilot-ui .bp-folder-row {
+    padding: 6px !important;
+    border: 1px solid #d9dfe5 !important;
+    background: #fff !important;
+    border-radius: 7px !important;
+  }
+  .bucketpilot-ui .bp-folder-row > button {
+    width: 100% !important;
+    text-align: start !important;
+    overflow-wrap: anywhere !important;
+  }
+  .bucketpilot-ui .bp-folder-selected {
+    border-color: #a84315 !important;
+    background: #fff1e6 !important;
+  }
+  .bucketpilot-ui .bp-review-dialog [data-review-content] {
+    overflow-wrap: anywhere !important;
+  }
+  /* The destination browser has its own dialog; manual entry stays inline. */
+  .bucketpilot-ui .bp-destination-modes {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    border: 0 !important;
+    padding: 0 !important;
+    margin-block: 14px !important;
+  }
+  .bucketpilot-ui .bp-destination-modes label {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    padding: 12px !important;
+    border: 1px solid #cbd4dd !important;
+    border-radius: 9px !important;
+    font-size: 11px !important;
+    cursor: pointer !important;
+  }
+  .bucketpilot-ui .bp-destination-modes label:has(:checked) {
+    border-color: #b64a12 !important;
+    background: #fff3e9 !important;
+    box-shadow: 0 0 0 1px #b64a12 !important;
+  }
+  .bucketpilot-ui .bp-destination-modes input {
+    margin: 2px 0 0 !important;
+    accent-color: #a84315 !important;
+  }
+  .bucketpilot-ui [data-manual-mode] > small {
+    display: block !important;
+    color: #586474 !important;
+    margin-block: 7px 12px !important;
+    font-size: 11px !important;
+  }
+  .bucketpilot-ui [data-pending-folder] {
+    font-size: 12px !important;
+    overflow-wrap: anywhere !important;
+    margin-block: 12px !important;
+  }
+  .bucketpilot-ui [data-path-card] > :is(span,small) {
+    width: 100% !important;
+    overflow-wrap: anywhere !important;
+  }
+  .bucketpilot-ui [data-destination-evidence] {
+    color: #586474 !important;
+    line-height: 1.5 !important;
+    font-size: 11px !important;
+  }
+  .bucketpilot-ui .bp-folder-browser {
+    width: min(900px, 94vw) !important;
+    max-width: 94vw !important;
+    max-height: 90vh !important;
+    overflow: auto !important;
+    margin: auto !important;
+    border: 1px solid #ccd6df !important;
+    border-radius: 16px !important;
+    padding: 0 !important;
+    color: #141b24 !important;
+    background: #fff !important;
+    box-shadow: 0 24px 100px #192b4855 !important;
+  }
+  .bucketpilot-ui .bp-folder-browser::backdrop {
+    background: #18243199 !important;
+  }
+  .bucketpilot-ui .bp-folder-browser-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 22px 26px !important;
+    border-bottom: 1px solid #dee5eb !important;
+    background: #f8fafc !important;
+  }
+  .bucketpilot-ui .bp-folder-browser-header h2 {
+    font-size: 22px !important;
+    margin: 0 !important;
+  }
+  .bucketpilot-ui .bp-folder-browser [data-folder-picker] {
+    padding: 0 26px 22px !important;
+  }
+  .bucketpilot-ui .bp-folder-location {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    border-bottom: 1px solid #e1e7ee !important;
+  }
+  .bucketpilot-ui .bp-folder-breadcrumbs {
+    min-width: 0 !important;
+    overflow-wrap: anywhere !important;
+  }
+  .bucketpilot-ui .bp-folder-breadcrumbs [aria-current] {
+    color: #a84315 !important;
+    font-weight: 700 !important;
+    background: #fff1e6 !important;
+  }
+  .bucketpilot-ui .bp-folder-tools {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: flex-end !important;
+    gap: 9px !important;
+    margin-top: 18px !important;
+  }
+  .bucketpilot-ui .bp-folder-tools > div {
+    flex: 1 !important;
+    min-width: 160px !important;
+  }
+  .bucketpilot-ui .bp-folder-tools label {
+    font-size: 12px !important;
+  }
+  .bucketpilot-ui .bp-folder-browser .bp-folder-list {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
+    align-content: start !important;
+    gap: 10px !important;
+    min-height: 240px !important;
+    max-height: 40vh !important;
+    overflow: auto !important;
+    background: #f8fafc !important;
+    padding: 14px !important;
+    border: 1px solid #e1e7ee !important;
+    border-radius: 10px !important;
+  }
+  .bucketpilot-ui .bp-folder-browser .bp-folder-row {
+    min-height: 80px !important;
+    margin: 0 !important;
+  }
+  .bucketpilot-ui .bp-folder-browser .bp-folder-row > button {
+    min-height: 66px !important;
+    background: #fff !important;
+    border: 0 !important;
+    font-size: 12px !important;
+    box-shadow: none !important;
+  }
+  .bucketpilot-ui .bp-folder-browser-footer {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding-top: 18px !important;
+  }
+  .bucketpilot-ui .bp-folder-browser-footer > div {
+    margin-inline-end: auto !important;
+    min-width: 0 !important;
+  }
+  .bucketpilot-ui .bp-folder-browser-footer :is(small,strong) {
+    display: block !important;
+    font-size: 12px !important;
+    overflow-wrap: anywhere !important;
+  }
+  .bucketpilot-ui .bp-folder-browser-footer small {
+    color: #586474 !important;
+    margin-bottom: 5px !important;
+  }
+  .bucketpilot-ui .bp-folder-skeleton {
+    grid-column: 1 / -1 !important;
+    padding: 25px !important;
+    color: #586474 !important;
+    background: linear-gradient(100deg, #e8edf2, #f6f8fb, #e8edf2) !important;
+    background-size: 200% 100% !important;
+    border-radius: 8px !important;
+    animation: bp-folder-loading 1.4s ease infinite !important;
+  }
+  @keyframes bp-folder-loading {
+    to {
+      background-position: -200% 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bucketpilot-ui .bp-folder-skeleton {
+      animation: none !important;
+    }
+  }
+  @media (max-width: 600px) {
+    .bucketpilot-ui .bp-destination-modes {
+      grid-template-columns: 1fr !important;
+    }
+    .bucketpilot-ui .bp-folder-browser-header {
+      padding: 16px !important;
+    }
+    .bucketpilot-ui .bp-folder-browser [data-folder-picker] {
+      padding: 0 14px 16px !important;
+    }
+    .bucketpilot-ui .bp-folder-browser-footer {
+      flex-wrap: wrap !important;
+    }
+    .bucketpilot-ui .bp-folder-browser-footer > div {
+      width: 100% !important;
+    }
+  }
+  .bucketpilot-ui .bp-backup-name {
+    padding: 0 !important;
+    margin: 16px 0 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+  .bucketpilot-ui .bp-backup-name label {
+    display: block !important;
+    margin-bottom: 7px !important;
+    font-weight: 700 !important;
+  }
+  .bucketpilot-ui .bp-backup-name input {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .bucketpilot-ui .bp-backup-name small {
+    display: block !important;
+    margin-top: 7px !important;
+    color: #586474 !important;
+    font-size: 11px !important;
+  }
+  .bucketpilot-ui .bp-edit-page-context {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    padding: 14px 16px !important;
+    margin-bottom: 20px !important;
+    border: 1px solid #edc7ad !important;
+    border-radius: 10px !important;
+    background: #fff8f1 !important;
+  }
+  .bucketpilot-ui .bp-edit-page-context > div {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+  }
+  .bucketpilot-ui .bp-edit-page-context strong {
+    color: #8f3d14 !important;
+    font-size: 11px !important;
+    text-transform: uppercase !important;
+    letter-spacing: .06em !important;
+  }
+  .bucketpilot-ui .bp-edit-page-context span {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    overflow-wrap: anywhere !important;
+  }
+  .bucketpilot-ui .bp-detail-source-list {
+    border: 1px solid #e5eaf0 !important;
+    border-radius: 8px !important;
+    padding: 8px 12px !important;
+  }
+  .bucketpilot-ui .bp-detail-source-list.is-scrollable {
+    max-height: 190px !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    scrollbar-width: thin !important;
+  }
+  .bucketpilot-ui .bp-source-group + .bp-source-group {
+    margin-top: 10px !important;
+  }
+  .bucketpilot-ui .bp-source-group h4 {
+    margin: 2px 0 6px !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    color: var(--bp-muted) !important;
+  }
+  .bucketpilot-ui .bp-source-group ul {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .bucketpilot-ui .bp-source-group li {
+    padding: 5px 0 !important;
+    border-bottom: 1px solid #f0f2f5 !important;
+    font-size: 12px !important;
+    line-height: 20px !important;
+  }
+  .bucketpilot-ui .bp-source-group li:last-child {
+    border-bottom: 0 !important;
+  }
+  .bucketpilot-ui .bp-source-group .bp-entry-name {
+    overflow-wrap: anywhere !important;
+    min-width: 0 !important;
+  }
+  .bucketpilot-ui .bp-record-scroll :is(th, td) {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .bucketpilot-ui .bp-record-scroll :is(th, td):last-child {
+    width: 180px !important;
+  }
+  .bucketpilot-ui .bp-record-scroll .bp-cell-value {
+    max-width: 100% !important;
+  }
+  .bucketpilot-ui .bp-record-scroll .bp-record-actions {
+    min-width: 0 !important;
+  }
+  .bucketpilot-ui .bp-record-scroll .bp-action-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 5px !important;
+    border: 1px solid transparent !important;
+    border-radius: 6px !important;
+    background: transparent !important;
+    color: #53637a !important;
+    box-shadow: none !important;
+    vertical-align: middle !important;
+  }
+  .bucketpilot-ui .bp-action-icon svg {
+    width: 16px !important;
+    height: 16px !important;
+    flex-shrink: 0 !important;
+  }
+  .bucketpilot-ui .bp-record-scroll .bp-action-icon:hover {
+    color: #9c431b !important;
+    background: #fff1e6 !important;
+    border-color: #f0d7c4 !important;
+  }
+  .bucketpilot-ui .bp-record-scroll .bp-action-delete {
+    color: #ad3147 !important;
+  }
+  .bucketpilot-ui .bp-record-scroll .bp-action-delete:hover {
+    background: #fff0f2 !important;
+    border-color: #f0cbd2 !important;
+    color: #9e2338 !important;
+  }
+  .bucketpilot-ui .bp-records[data-mode="plans"] .bp-record-scroll :is(th, td):nth-child(7),
+.bucketpilot-ui .bp-records[data-mode="plans"] .bp-record-scroll :is(th, td):nth-child(8) {
+    width: 110px !important;
+  }
+  .bucketpilot-ui .bp-records[data-mode="history"] .bp-record-scroll :is(th, td):last-child {
+    width: 100px !important;
+  }
+  .bucketpilot-ui .bp-record-heading-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+  .bucketpilot-ui .bp-records[data-mode="history"] .bp-record-scroll :is(th, td) {
+    padding: 8px 10px !important;
+    vertical-align: middle !important;
+    line-height: 1.45 !important;
+  }
+  .bucketpilot-ui .bp-records[data-mode="history"] .bp-record-scroll :is(th, td):first-child {
+    width: 23% !important;
+  }
+  .bucketpilot-ui .bp-records[data-mode="history"] .bp-record-scroll :is(th, td):nth-child(2) {
+    width: 25% !important;
+  }
+  .bucketpilot-ui .bp-records[data-mode="history"] .bp-cell-stack {
+    min-width: 0 !important;
+    gap: 2px !important;
+  }
+  .bucketpilot-ui .bp-records[data-mode="history"] .bp-cell-stack > :is(strong, small) {
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .bucketpilot-ui .bp-records[data-mode="history"] .bp-job-status {
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    box-sizing: border-box !important;
+    vertical-align: middle !important;
+  }
+  .bucketpilot-ui .bp-record-scroll th {
+    white-space: normal !important;
+    line-height: 1.5 !important;
+  }
+  .bucketpilot-ui .bp-record-scroll .bp-action-run {
+    color: #ad4b17 !important;
+  }
+  .bucketpilot-ui .bp-record-scroll .bp-action-resume {
+    color: #23724b !important;
+  }
+  .bucketpilot-ui .bp-setup-progress {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 0 24px !important;
+  }
+  .bucketpilot-ui .bp-setup-progress li {
+    position: relative !important;
+    min-width: 0 !important;
+    text-align: center !important;
+  }
+  .bucketpilot-ui .bp-setup-progress li:not(:last-child)::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 15px !important;
+    inset-inline-start: 50% !important;
+    width: 100% !important;
+    height: 2px !important;
+    background: #dce3ea !important;
+  }
+  .bucketpilot-ui .bp-setup-progress li.is-linked::after {
+    background: #2e8056 !important;
+  }
+  .bucketpilot-ui .bp-setup-progress button {
+    display: inline-flex !important;
+    position: relative !important;
+    z-index: 1 !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 7px !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    padding: 0 4px !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    color: var(--bp-muted) !important;
+    font-size: 11px !important;
+    line-height: 1.4 !important;
+  }
+  .bucketpilot-ui .bp-progress-marker {
+    display: grid !important;
+    place-items: center !important;
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 50% !important;
+    border: 2px solid #d5dde6 !important;
+    background: #fff !important;
+    color: #64748b !important;
+  }
+  .bucketpilot-ui .bp-setup-progress .is-complete .bp-progress-marker {
+    background: #237449 !important;
+    color: #fff !important;
+    border-color: #237449 !important;
+  }
+  .bucketpilot-ui .bp-setup-progress .is-complete button {
+    color: #206640 !important;
+  }
+  .bucketpilot-ui .bp-setup-progress button[aria-current="step"] .bp-progress-marker {
+    border-color: #cf641e !important;
+    color: #9b4819 !important;
+  }
+  .bucketpilot-ui .bp-config-note {
+    margin: 0 0 14px !important;
+    font-size: 12px !important;
+    line-height: 1.6 !important;
+    color: var(--bp-muted) !important;
+  }
+  .bucketpilot-ui .bp-step-complete .bp-step-number {
+    background: #e8f5ed !important;
+    color: #206640 !important;
+    border-color: #b9dbc7 !important;
+  }
+  .bucketpilot-ui .bp-builder-step > summary > span:nth-child(2) {
+    min-width: 0 !important;
+  }
+  .bucketpilot-ui .bp-builder-step > summary small {
+    overflow-wrap: anywhere !important;
+  }
+  @media (max-width: 540px) {
+    .bucketpilot-ui .bp-setup-progress button {
+      font-size: 10px !important;
+    }
+  }
+  .bucketpilot-ui .bp-config-actions {
+    display: flex !important;
+    justify-content: flex-end !important;
+    margin-bottom: 12px !important;
+  }
+  .bucketpilot-ui .bp-config-actions [data-clear-all] {
+    min-height: 30px !important;
+    padding: 5px 10px !important;
+    font-size: 11px !important;
+  }
+  .bucketpilot-ui .bp-setup-progress button:hover,
+.bucketpilot-ui .bp-setup-progress button:active,
+.bucketpilot-ui .bp-setup-progress button:focus,
+.bucketpilot-ui .bp-setup-progress button:focus-visible {
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+  .bucketpilot-ui .bp-builder-step > summary::after {
+    content: '' !important;
+    display: block !important;
+    flex: 0 0 14px !important;
+    width: 14px !important;
+    height: 14px !important;
+    margin: 5px 0 0 !important;
+    background: currentColor !important;
+    mask: var(--bp-chevron-icon) center / contain no-repeat !important;
+    transform: rotate(90deg) !important;
+  }
+  .bucketpilot-ui .bp-builder-step[open] > summary::after {
+    transform: rotate(270deg) !important;
+  }
+  .bucketpilot-ui .bp-step-state {
+    margin-inline-start: auto !important;
+    margin-block-start: 3px !important;
+  }
+  .bucketpilot-ui .bp-builder-final [data-review-builder] {
+    width: 100% !important;
+    min-height: 46px !important;
+    padding: 12px 18px !important;
+    border-radius: 9px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    letter-spacing: .01em !important;
+  }
+  .bucketpilot-ui .bp-builder-final [data-review-builder]:disabled {
+    background: #e9edf2 !important;
+    color: #758297 !important;
+    border-color: #dce2ea !important;
+    cursor: not-allowed !important;
+    opacity: 1 !important;
+    box-shadow: none !important;
+  }
+  .bucketpilot-ui .bp-builder-final [data-review-builder]:not(:disabled) {
+    background: #ed650a !important;
+    border-color: #ed650a !important;
+    color: #fff !important;
+    box-shadow: 0 3px 8px #c8501426 !important;
+  }
+  .bucketpilot-ui .bp-builder-final [data-review-builder]:not(:disabled):hover {
+    background: #d95705 !important;
+    border-color: #d95705 !important;
+  }
+  .bucketpilot-ui [data-commit-builder] {
+    min-height: 40px !important;
+    padding: 10px 18px !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+  }
+  .bucketpilot-ui .bp-builder-step.bp-step-locked {
+    opacity: .6 !important;
+    background: #f7f8fa !important;
+    border-color: #dce2e9 !important;
+  }
+  .bucketpilot-ui .bp-step-locked > summary {
+    cursor: not-allowed !important;
+  }
+  .bucketpilot-ui .bp-setup-progress button:disabled {
+    cursor: not-allowed !important;
+    opacity: .6 !important;
+  }
+  .bucketpilot-ui .bp-destination-modes {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+  .bucketpilot-ui [data-root-mode] {
+    padding: 10px 12px !important;
+    background: #f5f7fa !important;
+    border-radius: 7px !important;
+    color: var(--bp-muted) !important;
+    font-size: 12px !important;
+  }
+  .bucketpilot-ui .bp-folder-choice-label {
+    display: block !important;
+    margin-top: 14px !important;
+    color: var(--bp-muted) !important;
+    font-size: 10px !important;
+  }
+  .bucketpilot-ui [data-pending-folder] {
+    margin: 5px 0 0 !important;
+    padding: 10px 12px !important;
+    background: #f0f8f3 !important;
+    border: 1px solid #d2e8da !important;
+    border-radius: 7px !important;
+    color: #245e41 !important;
+    overflow-wrap: anywhere !important;
+    font-size: 12px !important;
+  }
+  @media (max-width: 540px) {
+    .bucketpilot-ui .bp-destination-modes {
+      grid-template-columns: 1fr !important;
+    }
+  }
+  /* Compact setup controls and messages stay with their own step. */
+  .bucketpilot-ui .bp-config-panel > .bp-builder-step {
+    padding: 12px 14px !important;
+  }
+  .bucketpilot-ui .bp-builder-step > summary {
+    font-size: 12px !important;
+  }
+  .bucketpilot-ui .bp-step-number {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 11px !important;
+  }
+  .bucketpilot-ui .bp-destination-modes {
+    gap: 6px !important;
+    margin-block: 12px !important;
+  }
+  .bucketpilot-ui .bp-destination-modes label {
+    padding: 8px !important;
+    gap: 6px !important;
+    align-items: center !important;
+    font-size: 10px !important;
+    line-height: 1.4 !important;
+    border-radius: 7px !important;
+  }
+  .bucketpilot-ui .bp-destination-modes input {
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+  }
+  .bucketpilot-ui [data-manual-mode] > small, .bucketpilot-ui [data-step-hint] {
+    font-size: 10px !important;
+    line-height: 1.5 !important;
+    margin: 8px 0 0 !important;
+    color: var(--bp-muted) !important;
+  }
+  .bucketpilot-ui .bp-step-inline-error {
+    font-size: 11px !important;
+    line-height: 1.5 !important;
+    color: #a22e41 !important;
+    margin-top: 10px !important;
+  }
+  .bucketpilot-ui .bp-step-inline-error:empty {
+    display: none !important;
+  }
+  .bucketpilot-ui .bp-step-inline-error .button {
+    min-height: 26px !important;
+    padding: 3px 8px !important;
+    font-size: 10px !important;
+    margin-inline-start: 8px !important;
+  }
+  .bucketpilot-ui .bp-folder-choice-label {
+    margin-top: 10px !important;
+  }
+  .bucketpilot-ui [data-pending-folder] {
+    padding: 8px 10px !important;
+    font-size: 11px !important;
+  }
+  .bucketpilot-ui .bp-folder-browser {
+    width: min(760px, 94vw) !important;
+    border-radius: 12px !important;
+  }
+  .bucketpilot-ui .bp-folder-browser-header {
+    padding: 16px 20px !important;
+    background: #fff !important;
+  }
+  .bucketpilot-ui .bp-folder-browser-header h2 {
+    font-size: 18px !important;
+  }
+  .bucketpilot-ui .bp-folder-browser [data-folder-picker] {
+    padding: 0 20px 18px !important;
+  }
+  .bucketpilot-ui .bp-folder-browser .bp-folder-list {
+    grid-template-columns: 1fr !important;
+    gap: 4px !important;
+    min-height: 140px !important;
+    padding: 8px !important;
+  }
+  .bucketpilot-ui .bp-folder-browser .bp-folder-row {
+    min-height: 0 !important;
+  }
+  .bucketpilot-ui .bp-folder-browser .bp-folder-row > button {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    min-height: 36px !important;
+    padding: 8px 10px !important;
+    font-size: 12px !important;
+  }
+  .bucketpilot-ui .bp-folder-skeleton {
+    min-height: 100px !important;
+    padding: 0 !important;
+    background: repeating-linear-gradient(to bottom, #e9eef3 0, #e9eef3 24px, #f8fafc 24px, #f8fafc 36px) !important;
+    opacity: .65 !important;
+  }
+  .bucketpilot-ui .bp-new-folder-dialog {
+    width: min(430px, calc(100vw - 32px)) !important;
+  }
+  .bucketpilot-ui .bp-new-folder-dialog .bp-detail-body {
+    padding: 18px 22px !important;
+  }
+  .bucketpilot-ui .bp-new-folder-dialog .bp-detail-header {
+    padding: 16px 22px !important;
+  }
+  .bucketpilot-ui .bp-new-folder-dialog .bp-detail-header h2 {
+    font-size: 16px !important;
+  }
+  .bucketpilot-ui .bp-new-folder-dialog .bp-detail-footer {
+    padding: 14px 22px !important;
+  }
+  .bucketpilot-ui .bp-new-folder-dialog input {
+    width: 100% !important;
+    min-height: 38px !important;
+    box-sizing: border-box !important;
+  }
+  .bucketpilot-ui .bp-new-folder-location {
+    margin: 0 0 16px !important;
+    color: var(--bp-muted) !important;
+    font-size: 11px !important;
+    line-height: 1.6 !important;
+  }
+  .bucketpilot-ui .bp-new-folder-location span {
+    display: block !important;
+    overflow-wrap: anywhere !important;
+    color: var(--bp-ink) !important;
+    font-size: 12px !important;
+  }
+  .bucketpilot-ui .bp-folder-operation-feedback:empty, .bucketpilot-ui .bp-folder-loading-feedback:empty {
+    display: none !important;
+  }
+  .bucketpilot-ui :is(.bp-folder-operation-feedback, .bp-folder-loading-feedback) .bp-ajax-activity {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    box-sizing: border-box !important;
+    margin: 12px 0 0 !important;
+    padding: 10px 12px !important;
+    border-radius: 7px !important;
+    background: #f1f6fb !important;
+    border-color: #dce5ef !important;
+    box-shadow: none !important;
+    font-size: 11px !important;
+  }
+  .bucketpilot-ui .bp-folder-loading-feedback .bp-ajax-activity {
+    margin: 10px 0 !important;
+  }
+  @media (max-width: 540px) {
+    .bucketpilot-ui .bp-config-panel > .bp-builder-step {
+      padding: 12px 10px !important;
+    }
+  }
+}

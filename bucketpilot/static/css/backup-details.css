@@ -1,0 +1,225 @@
+@layer bucketpilot.visibility, bucketpilot.components, bucketpilot.reset;
+@layer bucketpilot.components {
+  /* Execution details share the plan-detail cards and compact source presentation. */
+  .bucketpilot-ui .bp-back-link {
+    display: inline-block !important;
+    margin-bottom: 18px !important;
+    font-size: 12px !important;
+    color: #586474 !important;
+  }
+  .bucketpilot-ui .bp-back-link::before {
+    content: '\2190' !important;
+    margin-inline-end: 7px !important;
+  }
+  .bucketpilot-ui .bp-backup-detail .bp-detail-hero {
+    align-items: flex-start !important;
+    margin-bottom: 20px !important;
+  }
+  .bucketpilot-ui .bp-backup-detail .bp-detail-hero h2 {
+    margin: 5px 0 0 !important;
+    font-size: 22px !important;
+    line-height: 1.4 !important;
+    overflow-wrap: anywhere !important;
+  }
+  .bucketpilot-ui .bp-backup-detail .bp-detail-hero > div {
+    min-width: 0 !important;
+  }
+  .bucketpilot-ui .bp-backup-detail .bp-detail-hero .bp-job-status {
+    flex-shrink: 0 !important;
+  }
+  .bucketpilot-ui .bp-execution-progress [data-progress-summary] {
+    font-size: 13px !important;
+    color: var(--bp-muted) !important;
+    margin: 0 0 10px !important;
+  }
+  .bucketpilot-ui .bp-execution-progress progress {
+    display: block !important;
+    appearance: none !important;
+    width: 100% !important;
+    height: 7px !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    background: #e9edf2 !important;
+    accent-color: var(--bp-progress-color, #306787) !important;
+  }
+  .bucketpilot-ui .bp-execution-progress progress::-webkit-progress-bar {
+    background: #e9edf2 !important;
+    border-radius: 8px !important;
+  }
+  .bucketpilot-ui .bp-execution-progress progress::-webkit-progress-value {
+    background: var(--bp-progress-color, #306787) !important;
+    border-radius: 8px !important;
+  }
+  .bucketpilot-ui .bp-execution-progress progress::-moz-progress-bar {
+    background: var(--bp-progress-color, #306787) !important;
+    border-radius: 8px !important;
+  }
+  .bucketpilot-ui .bp-execution-metrics {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 20px !important;
+    padding: 20px 0 0 !important;
+    margin: 22px 0 0 !important;
+    border-top: 1px solid var(--bp-line) !important;
+  }
+  .bucketpilot-ui .bp-execution-metrics dt {
+    font-size: 11px !important;
+    color: var(--bp-muted) !important;
+    margin-bottom: 7px !important;
+  }
+  .bucketpilot-ui .bp-execution-metrics dd {
+    margin: 0 !important;
+    font-size: 23px !important;
+    line-height: 1.3 !important;
+    font-weight: 650 !important;
+    overflow-wrap: anywhere !important;
+  }
+  .bucketpilot-ui .bp-execution-metrics .bp-failed-count.has-failures {
+    color: #a92d42 !important;
+  }
+  .bucketpilot-ui .bp-execution-actions {
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+  }
+  .bucketpilot-ui .bp-execution-actions:has(a:not([hidden])) {
+    margin-top: 20px !important;
+  }
+  .bucketpilot-ui .bp-execution-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 20px !important;
+  }
+  .bucketpilot-ui .bp-backup-detail .bp-detail-section + .bp-detail-section {
+    margin-top: 0 !important;
+  }
+  .bucketpilot-ui .bp-execution-grid > .bp-card {
+    min-width: 0 !important;
+  }
+  .bucketpilot-ui .bp-detail-wide {
+    grid-column: 1 / -1 !important;
+  }
+  .bucketpilot-ui .bp-detail-path {
+    font-family: ui-monospace, monospace !important;
+    font-weight: 400 !important;
+  }
+  .bucketpilot-ui .bp-detail-zone {
+    font-weight: 400 !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    margin-inline-start: 6px !important;
+  }
+  .bucketpilot-ui .bp-detail-empty-notice {
+    padding: 12px !important;
+    border-radius: 7px !important;
+    margin-top: 14px !important;
+    background: #fff8ef !important;
+    color: #885016 !important;
+    font-size: 12px !important;
+  }
+  .bucketpilot-ui .bp-live-feedback {
+    margin-top: 10px !important;
+    font-size: 11px !important;
+    color: var(--bp-muted) !important;
+  }
+  .bucketpilot-ui .bp-live-feedback:empty {
+    display: none !important;
+  }
+  .bucketpilot-ui .bp-execution-card .bp-detail-error {
+    margin-top: 16px !important;
+    font-size: 12px !important;
+  }
+  .bucketpilot-ui .bp-file-activity-heading h3 {
+    font-size: 14px !important;
+    margin: 0 0 6px !important;
+  }
+  .bucketpilot-ui .bp-file-activity-heading p {
+    font-size: 11px !important;
+    color: var(--bp-muted) !important;
+    margin: 0 0 16px !important;
+  }
+  .bucketpilot-ui .bp-backup-audit-scroll {
+    max-height: 390px !important;
+    overflow: auto !important;
+  }
+  .bucketpilot-ui .bp-backup-audit-scroll table {
+    min-width: 760px !important;
+    width: 100% !important;
+  }
+  .bucketpilot-ui .bp-backup-audit-scroll :is(th, td) {
+    font-size: 11px !important;
+  }
+  .bucketpilot-ui .bp-backup-audit-scroll th {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1 !important;
+    background: #f4f7fa !important;
+  }
+  .bucketpilot-ui .bp-execution-pager {
+    display: flex !important;
+    justify-content: flex-end !important;
+    margin-top: 12px !important;
+  }
+  .bucketpilot-ui .bp-execution-technical > summary {
+    cursor: pointer !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+  }
+  .bucketpilot-ui .bp-execution-technical .bp-detail-grid {
+    margin-top: 16px !important;
+  }
+  .bucketpilot-ui .bp-execution-technical p {
+    margin-top: 14px !important;
+    font-size: 11px !important;
+    color: var(--bp-muted) !important;
+    line-height: 1.7 !important;
+  }
+  @media (max-width: 900px) {
+    .bucketpilot-ui .bp-execution-grid {
+      grid-template-columns: 1fr !important;
+      gap: 0 !important;
+    }
+  }
+  @media (max-width: 540px) {
+    .bucketpilot-ui .bp-execution-metrics {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 18px !important;
+    }
+    .bucketpilot-ui .bp-execution-metrics dd {
+      font-size: 20px !important;
+    }
+    .bucketpilot-ui .bp-backup-detail .bp-detail-hero {
+      flex-wrap: wrap !important;
+    }
+  }
+  .bucketpilot-ui .bp-execution-card[data-bp-tone="success"] {
+    --bp-progress-color: #237449 !important;
+  }
+  .bucketpilot-ui .bp-execution-card[data-bp-tone="danger"] {
+    --bp-progress-color: #ad3146 !important;
+  }
+  .bucketpilot-ui .bp-execution-card[data-bp-tone="warning"] {
+    --bp-progress-color: #b46b13 !important;
+  }
+  .bucketpilot-ui .bp-execution-card[data-bp-tone="neutral"] {
+    --bp-progress-color: #738297 !important;
+  }
+  .bucketpilot-ui .bp-file-activity-heading {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+  }
+  .bucketpilot-ui .bp-file-activity-heading .button {
+    flex-shrink: 0 !important;
+  }
+  .bucketpilot-ui .bp-execution-pager:empty {
+    display: none !important;
+  }
+  .bucketpilot-ui .bp-execution-card[data-bp-tone] {
+    background: #fff !important;
+    color: var(--bp-ink) !important;
+    border-color: var(--bp-line) !important;
+  }
+}
