@@ -56,6 +56,7 @@ class Builder:
         self.zone = zone if zone in TIMEZONES else "UTC"
         self.params = self.env["ir.config_parameter"]
         self.store = Credential(self.env.cr.dbname)
+        self.sources = Sources(self.env.cr.dbname)
         self.Plan = self.env["bucketpilot.plan"]
         self.Run = self.env["bucketpilot.run"]
         self.Item = self.env["bucketpilot.item"]
@@ -158,6 +159,7 @@ class Builder:
     def defaults(self):
         clock = datetime.now(ZoneInfo(self.zone)).strftime("%H:%M")
         return dict(name="", bucket=None, prefix="", prefix_saved=False, destination_mode="manual", rules=[],
+                    source_binding=self.sources.binding,
                     schedule=dict(frequency="", timezone=self.zone, time=clock, weekday=1, monthday=1, date=""))
 
     def editable(self, plan):
@@ -167,7 +169,11 @@ class Builder:
     def edit_defaults(self, plan):
         if not self.editable(plan):
             raise BackupError("This one-time plan already has a saved execution.")
-        return {**copy.deepcopy(plan.config), "plan_id": plan.public_id, "plan_revision": plan.revision, "_edit_dirty": False}
+        data = {**copy.deepcopy(plan.config), "plan_id": plan.public_id, "plan_revision": plan.revision, "_edit_dirty": False}
+        data["_source_review"] = data.get("source_binding") != self.sources.binding
+        if data["_source_review"]:
+            data.update(rules=[], source_binding=self.sources.binding)
+        return data
 
     def draft(self, scope="", reset=False):
         self.env.cr.execute("SELECT pg_advisory_xact_lock(hashtext('bucketpilot.draft'), %s)", [self.uid])
@@ -182,6 +188,9 @@ class Builder:
             else:
                 row = model.create({"owner_id": self.uid, "scope": scope_key, "config": data,
                                     "generation": generation})
+        elif row.config.get("source_binding") != self.sources.binding:
+            data = {**row.config, "rules": [], "source_binding": self.sources.binding}
+            row.write({"config": data, "revision": row.revision + 1})
         return row
 
     def present(self, row, extra=None):
@@ -200,9 +209,9 @@ class Builder:
         when = next_run(schedule, fields.Datetime.now())
         if schedule["frequency"] != "now" and not when:
             raise BackupError("Choose a future date and time.")
-        project = Sources()
+        self.sources.verify(config)
         for rule in config["rules"]:
-            with project.opened(rule["path"], rule["directory"]):
+            with self.sources.opened(rule["path"], rule["directory"]):
                 pass
         client = self.api()
         bucket = client.bucket(config["bucket"]["id"])
@@ -213,7 +222,7 @@ class Builder:
         capability = (config["prefix"] + "/" if config["prefix"] else "") + "capability-check"
         if not isinstance(client.presign(bucket["id"], capability), str):
             raise BackupError("The selected connection does not provide write access.")
-        config = {key: config[key] for key in ("name", "bucket", "prefix", "prefix_saved", "destination_mode", "rules", "schedule")}
+        config = {key: config[key] for key in ("name", "bucket", "prefix", "prefix_saved", "destination_mode", "rules", "schedule", "source_binding")}
         config.update(bucket=bucket, schedule=schedule)
         changes = {"name": config["name"], "config": config, "credential": fingerprint(client.key),
                    "identity": client.identity(bucket), "next_date": when or False, "hold": False}
@@ -254,13 +263,13 @@ class Builder:
         changes = data.get("changes")
         if not isinstance(changes, list) or len(changes) > 100:
             raise BackupError("Select up to 100 source rules at a time.")
-        project = Sources()
+        self.sources.verify(config)
         rules = config["rules"]
         for change in changes:
             if not isinstance(change, dict) or type(change.get("include")) is not bool or type(change.get("directory")) is not bool:
                 raise BackupError("Invalid source selection.")
             path = change.get("path")
-            with project.opened(path, change["directory"]):
+            with self.sources.opened(path, change["directory"]):
                 pass
             rules = [rule for rule in rules if path and rule["path"] != path and not rule["path"].startswith(path + "/")]
             if selected(rules, path) != change["include"]:
@@ -343,6 +352,7 @@ class Builder:
         if operation == "run":
             if frequency in ("now", "once"):
                 raise BackupError("This plan describes a single execution.")
+            self.sources.verify(plan.config)
             if plan.hold:
                 raise BackupError("Restore the original connection before requesting a backup.")
             self._bound(plan)
@@ -353,6 +363,7 @@ class Builder:
         if operation in ("pause", "resume") and not self.editable(plan):
             raise BackupError("This one-time plan already has a saved execution.")
         if operation == "resume":
+            self.sources.verify(plan.config)
             self._bound(plan)
             when = next_run(plan.config["schedule"], now)
             if frequency == "once" and not when:
@@ -388,6 +399,7 @@ class Builder:
         if operation == "resume" and run.state in ("cancelled", "failed"):
             if run.plan_id and self.Run.search_count([("plan_id", "=", run.plan_id.id), ("state", "in", ACTIVE)]):
                 raise BackupError("This plan already has a backup in progress.")
+            self.sources.verify(run.config)
             self._bound(run)
             failed = self.Item.search([("run_id", "=", run.id), ("state", "=", "failed")])
             for item in failed:
@@ -396,6 +408,7 @@ class Builder:
                        "next_retry": False, "attempts": 0, "scan_errors": 0, "notification_sent": False})
             return {}
         if operation == "retry_run" and run.state in ("failed", "cancelled", "completed_with_errors"):
+            self.sources.verify(run.config)
             self._bound(run)
             if self.Run.search_count([("plan_id", "=", plan.id), ("state", "in", ACTIVE)]):
                 raise BackupError("This plan already has a backup in progress.")
@@ -474,20 +487,20 @@ class Builder:
     def search_sources(self, query, token, session):
         query = query.casefold()
         saved = session.get("bucketpilot_file_search") or {}
-        if token and (saved.get("token") != token or saved.get("query") != query or saved.get("uid") != self.uid):
+        if token and (saved.get("token") != token or saved.get("query") != query or saved.get("uid") != self.uid or
+                      saved.get("source_binding") != self.sources.binding):
             raise BackupError("This source search expired. Run it again.")
         if not token:
             token = str(uuid4())
             saved = {"token": token, "query": query, "uid": self.uid, "pending": [["", 0]],
-                     "matches": [], "pages_checked": 0, "skipped": 0}
+                     "matches": [], "pages_checked": 0, "skipped": 0, "source_binding": self.sources.binding}
         pending = deque(saved["pending"])
         started = time.monotonic()
-        project = Sources()
         while pending and time.monotonic() - started < 2 and saved["pages_checked"] < 200 and len(saved["matches"]) < 500:
             path, offset = pending.popleft()
             saved["pages_checked"] += 1
             try:
-                entries = project.listing(path)
+                entries = self.sources.listing(path)
             except BackupError:
                 saved["skipped"] += 1
                 continue
@@ -509,21 +522,26 @@ class Builder:
         recent = self.Run.search([("plan_id", "=", plan.id)], order="requested desc, id desc", limit=5)
         runs = [{"status": run.state, "execution_type": run.execution_type, "created": timestamp(run.requested)} for run in recent]
         frequency = plan.config["schedule"]["frequency"]
-        if plan.paused or plan.hold:
+        source_changed = plan.config.get("source_binding") != self.sources.binding
+        reason = "source_changed" if source_changed else plan.hold
+        if (source_changed and self.editable(plan)) or plan.paused or plan.hold:
             status = "paused"
         elif frequency in ("now", "once") and recent:
             status = recent[0].state
         else:
             status = "active"
         actions = []
-        if not plan.hold:
+        if source_changed:
+            if self.editable(plan):
+                actions.append("edit")
+        elif not plan.hold:
             if self.editable(plan):
                 actions.extend(("edit", "resume" if plan.paused else "pause"))
             if frequency not in ("now", "once") and not any(run.state in ACTIVE for run in recent):
                 actions.append("run")
         return {"id": plan.public_id, "name": plan.name, "revision": plan.revision, "frequency": frequency,
                 "data": plan.config, "config": plan.config, "bucket_label": plan.config["bucket"]["name"],
-                "destination": plan.config["prefix"] or "/", "status": status, "pause_reason": plan.hold or "",
+                "destination": plan.config["prefix"] or "/", "status": status, "pause_reason": reason or "",
                 "next_run": timestamp(plan.next_date), "last_run": timestamp(plan.last_date),
                 "recent_runs": runs, "latest_execution": runs[0] if runs else None, "actions": actions}
 

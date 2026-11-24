@@ -1,6 +1,7 @@
 import json
 import time
 from datetime import datetime, timezone
+from hashlib import sha256
 from pathlib import Path
 from urllib.parse import urlencode
 from uuid import uuid4
@@ -15,16 +16,17 @@ from odoo.http import request
 from ..calendar import TIMEZONES
 from ..builder import Builder, Conflict, STATUSES, TONES, page_slice, public_id, value_text
 from ..models.backup import ACTIVE, human_bytes
-from ..storage import BackupError, Sources
+from ..storage import BackupError
 
 
-TEMPLATES = Environment(loader=FileSystemLoader(Path(__file__).resolve().parents[1] / "templates"),
+MODULE_ROOT = Path(__file__).resolve().parents[1]
+TEMPLATES = Environment(loader=FileSystemLoader(MODULE_ROOT / "templates"),
                         autoescape=select_autoescape(["html"]))
 NAV = {
     "overview": ("/bucketpilot", "Overview", "Your workspace at a glance. Monitor your connection and explore connected storage."),
     "connection": ("/bucketpilot/connection", "Connection", "Manage the secure connection between this Odoo site and your BucketPilot workspace."),
     "buckets": ("/bucketpilot/buckets", "Buckets", "Find the storage bucket you need. Choose a destination when creating a backup."),
-    "backups": ("/bucketpilot/backups", "Backups", "Select project sources, choose a destination and review before starting."),
+    "backups": ("/bucketpilot/backups", "Backups", "Select backup files, choose a destination and review before starting."),
     "schedules": ("/bucketpilot/schedules", "Backup Schedules", "Manage recurring plans, one-time schedules and their execution history."),
     "history": ("/bucketpilot/history", "Backup History", "Follow background jobs and inspect their saved progress and file records."),
 }
@@ -35,6 +37,19 @@ SCRIPTS = ["bootstrap", "confirmation", "notifications", "ajax-feedback", "conne
 NO_CACHE = [("Cache-Control", "private, no-store"), ("X-Content-Type-Options", "nosniff"),
             ("Referrer-Policy", "same-origin")]
 EMPTY_ID = "00000000-0000-0000-0000-000000000000"
+
+
+def asset_urls(directory, names, extension):
+    urls = []
+    for name in names:
+        path = f"static/{directory}/{name}.{extension}"
+        digest = sha256((MODULE_ROOT / path).read_bytes()).hexdigest()[:12]
+        urls.append(f"/bucketpilot/{path}?v={digest}")
+    return urls
+
+
+STYLE_URLS = asset_urls("css", STYLES, "css")
+SCRIPT_URLS = asset_urls("js", SCRIPTS, "js")
 
 
 def number(value, default, max_value=100000):
@@ -57,7 +72,10 @@ class BucketPilot(http.Controller):
         is_admin = user.has_group("base.group_system")
         if not is_admin and (admin or not user.has_group("bucketpilot.group_backup_operator")):
             raise Forbidden()
-        return Builder(request.env, user.id, user.tz), is_admin
+        builder = Builder(request.env, user.id, user.tz)
+        if not is_admin and not builder.sources.custom:
+            raise Forbidden()
+        return builder, is_admin
 
     def _safe_context(self, builder, admin):
         context = builder.connection()
@@ -99,7 +117,7 @@ class BucketPilot(http.Controller):
         content = TEMPLATES.get_template("shell.html").render(
             active=active, template=template, title=values.pop("title", title),
             embedded=request.httprequest.headers.get("Sec-Fetch-Dest") in ("iframe", "frame"),
-            description=values.pop("description", description), styles=STYLES, scripts=SCRIPTS,
+            description=values.pop("description", description), styles=STYLE_URLS, scripts=SCRIPT_URLS,
             logo_url="/bucketpilot/static/description/bucketpilot-logo.svg",
             connection=connection,
             navigation=[dict(url=url, label=label, active=active == key)
@@ -190,14 +208,19 @@ class BucketPilot(http.Controller):
         if redirect := self._open_in_odoo():
             return redirect
         edit_name = ""
+        source_review = False
         if scope:
             try:
                 scope = public_id(scope)
-                edit_name = builder.draft(scope, reset=True).config["name"]
+                draft = builder.draft(scope, reset=True).config
+                edit_name = draft["name"]
+                source_review = draft["_source_review"]
             except BackupError:
                 raise NotFound() from None
         return self._page(builder, admin, "schedules" if scope else "backups", "builder.html",
                           scope=scope, editing=bool(scope), edit_name=edit_name,
+                          source_custom=builder.sources.custom, source_database=builder.sources.database_scope,
+                          source_review=source_review,
                           title="Edit backup plan" if scope else "Backups")
 
     @http.route(["/bucketpilot/schedules", "/bucketpilot/history"], auth="user", type="http", methods=["GET"])
@@ -223,8 +246,13 @@ class BucketPilot(http.Controller):
         if action == "files":
             path = params.get("path", "")
             offset = number(params.get("offset"), 0, 50000)
-            entries = Sources().listing(path)
+            entries = builder.sources.listing(path)
+            if focus := params.get("focus"):
+                index = next((index for index, entry in enumerate(entries) if entry["path"] == focus), None)
+                if index is not None:
+                    offset = index // 100 * 100
             return {"entries": entries[offset:offset + 100], "path": path,
+                    "previous": offset - 100 if offset >= 100 else None,
                     "next": offset + 100 if offset + 100 < len(entries) else None}
         if action == "search":
             return builder.search_sources(query, params.get("token"), request.session)

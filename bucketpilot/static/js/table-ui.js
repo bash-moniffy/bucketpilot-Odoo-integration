@@ -52,6 +52,7 @@
         const resize = new ResizeObserver((entries) => entries.forEach((entry) => fit(entry.target)));
         const decorate = () => {
           root.querySelectorAll('table').forEach((table) => {
+            if (table.classList.contains('bp-builder-tree')) { return; }
             if (!table.closest('.bp-table-scroll, .bp-tree-scroll, .bp-bucket-picker-scroll') && !table.classList.contains('bucketpilot-backup-table')) {
               const scroll = document.createElement('div'); scroll.className = 'bp-table-scroll'; scroll.tabIndex = 0; scroll.setAttribute('role', 'region'); scroll.setAttribute('aria-label', bucketpilotUI.t('Scrollable table')); table.before(scroll); scroll.append(table);
             }
