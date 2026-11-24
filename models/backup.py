@@ -103,7 +103,8 @@ class BackupPlan(models.Model):
         original = snapshot or self
         run = self.env["bucketpilot.run"].create({
             "plan_id": self.id, "plan_public_id": self.public_id, "name": original.name,
-            "config": original.config, "credential": original.credential, "identity": original.identity,
+            "config": {**original.config, "destination_source_folder": None, "destination_flat_files": None},
+            "credential": original.credential, "identity": original.identity,
             "execution_type": execution_type, "requested": now, "bucket_identity": original.identity,
         })
         self.last_date = now
@@ -184,7 +185,6 @@ class BackupRun(models.Model):
         raise BackupError("No free backup folder could be allocated for this date.")
 
     def _seed(self):
-        Sources()
         self.env["bucketpilot.item"].create([
             {"run_id": self.id, "path": rule["path"] or "/", "kind": "directory" if rule["directory"] else "file"}
             for rule in self.config["rules"] if rule["include"]
@@ -193,15 +193,52 @@ class BackupRun(models.Model):
                     "next_retry": False})
         self.plan_id.hold = False
 
-    def _scan(self):
+    def _destination_layout(self, sources):
+        config = {**self.config, "destination_source_folder": False}
+        if sources.custom:
+            return config
+
+        items = self.env["bucketpilot.item"]
+        items.flush_model(["run_id", "kind", "path"])
+        self.env.cr.execute(SQL("""
+            SELECT DISTINCT
+                CASE WHEN strpos(path, '/') > 0 THEN split_part(path, '/', 1) ELSE '' END
+            FROM bucketpilot_item
+            WHERE run_id = %s AND kind = 'file'
+            LIMIT 2
+        """, self.id))
+        folders = self.env.cr.fetchall()
+        folder = folders[0][0] if len(folders) == 1 else ""
+        config["destination_source_folder"] = folder or False
+        # Earlier executions may already have checkpoints with their original keys.
+        if "destination_flat_files" not in config:
+            return config
+
+        flat = {rule["path"]: rule["path"].rsplit("/", 1)[-1] for rule in config["rules"]
+                if rule["include"] and not rule["directory"]}
+        names = set(flat.values())
+        prefix = folder + "/" if folder else ""
+        collisions = items.search_count([
+            ("run_id", "=", self.id), ("kind", "=", "file"),
+            ("path", "in", [prefix + name for name in names]), ("path", "not in", list(flat)),
+        ], limit=1) if names else 0
+        if len(names) != len(flat) or collisions:
+            raise BackupError("Selected files would have the same name in the destination. Back them up in separate runs.")
+        config["destination_flat_files"] = flat
+        return config
+
+    def _scan(self, sources):
         items = self.env["bucketpilot.item"]
         folder = items.search([("run_id", "=", self.id), ("kind", "=", "directory"), ("state", "=", "pending")],
                               order="id", limit=1)
         if not folder:
-            self.state = "running"
+            changes = {"state": "running"}
+            if "destination_source_folder" in self.config and self.config["destination_source_folder"] is None:
+                changes["config"] = self._destination_layout(sources)
+            self.write(changes)
             return
         try:
-            rows = Sources().listing("" if folder.path == "/" else folder.path)
+            rows = sources.listing("" if folder.path == "/" else folder.path)
         except BackupError:
             self.scan_errors += 1
             folder.state = "failed"
@@ -222,7 +259,7 @@ class BackupRun(models.Model):
         else:
             folder.state = "done"
 
-    def _file(self, client, bucket):
+    def _file(self, sources, client, bucket):
         now = fields.Datetime.now()
         items = self.env["bucketpilot.item"]
         domain = [("run_id", "=", self.id), ("kind", "=", "file"), ("state", "in", ("pending", "put"))]
@@ -240,11 +277,14 @@ class BackupRun(models.Model):
         self.next_retry = False
         self.error = False
         try:
-            key = self.prefix + item.path
+            folder = self.config.get("destination_source_folder")
+            relative_path = item.path.removeprefix(folder + "/") if folder else item.path
+            object_path = (self.config.get("destination_flat_files") or {}).get(item.path, relative_path)
+            key = self.prefix + object_path
             if len(key.encode()) > 1024:
                 raise BackupError("The object key exceeds the storage length limit.")
             if item.state == "pending":
-                with Sources().snapshot(item.path) as (stream, size):
+                with sources.snapshot(item.path) as (stream, size):
                     client.put(bucket["id"], key, bucket["provider"], stream, size)
                 item.write({"size": size, "state": "put", "attempts": 0, "error": False, "next_retry": False})
             else:
@@ -261,21 +301,25 @@ class BackupRun(models.Model):
     def _step(self, verified):
         now = fields.Datetime.now()
         try:
+            sources = Sources(self.env.cr.dbname)
+            sources.verify(self.config)
             client = self._bound_api()
             if self.state in ("pending", "queued"):
                 bucket = self._check_remote(client)
                 verified[self.id] = bucket
+                with sources.opened("", True):
+                    pass
                 if not self.prefix:
                     self._allocate(client, bucket)
                 self._seed()
             elif self.state == "scanning":
-                self._scan()
+                self._scan(sources)
             elif self.state == "running":
                 bucket = verified.get(self.id)
                 if not bucket:
                     bucket = self._check_remote(client)
                     verified[self.id] = bucket
-                self._file(client, bucket)
+                self._file(sources, client, bucket)
         except BackupError as issue:
             if issue.code in ("connection_changed", "settings_changed", "access", "missing"):
                 reasons = {"access": "access_unavailable", "missing": "bucket_missing"}
@@ -292,6 +336,7 @@ class BackupRun(models.Model):
         Plan = self.env["bucketpilot.plan"]
         due = Plan.search([("paused", "=", False), ("deleted", "=", False),
                            ("next_date", "!=", False), ("next_date", "<=", now)], limit=25)
+        sources = Sources(self.env.cr.dbname)
         for plan in due:
             self.env.cr.execute("SELECT id FROM bucketpilot_plan WHERE id = %s FOR UPDATE SKIP LOCKED", [plan.id])
             if not self.env.cr.fetchone():
@@ -300,6 +345,9 @@ class BackupRun(models.Model):
             if plan.paused or plan.deleted or not plan.next_date or plan.next_date > now:
                 continue
             if self.search_count([("plan_id", "=", plan.id), ("state", "in", ACTIVE)]):
+                continue
+            if plan.config.get("source_binding") != sources.binding:
+                plan.write({"hold": "source_changed", "next_date": False})
                 continue
             schedule = plan.config["schedule"]
             plan._reserve("scheduled")
@@ -335,7 +383,7 @@ class BackupRun(models.Model):
         sources = {"included": [], "excluded": []}
         for rule in self.config.get("rules", [])[:100]:
             group = "included" if rule["include"] else "excluded"
-            sources[group].append({"path": rule["path"] or "project /", "directory": rule["directory"]})
+            sources[group].append({"path": rule["path"] or "Entire source", "directory": rule["directory"]})
 
         return {
             "site": self.env.ref("base.main_company").name,

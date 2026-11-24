@@ -41,7 +41,7 @@
       const group = node('section', undefined, 'bp-source-group');
       group.append(node('h4', `${included ? bucketpilotUI.t('Included') : bucketpilotUI.t('Excluded')} (${entries.length})`));
       const items = node('ul');
-      entries.forEach((rule) => { const entry = node('li'); entry.append(node('span', rule.path || 'project /', `bp-entry-name bp-entry-name--${rule.directory ? 'folder' : 'file'}`)); items.append(entry); });
+      entries.forEach((rule) => { const entry = node('li'); entry.append(node('span', rule.path || 'Entire source', `bp-entry-name bp-entry-name--${rule.directory ? 'folder' : 'file'}`)); items.append(entry); });
       group.append(items); list.append(group);
     });
     if (!rules.length) { list.append(node('p', bucketpilotUI.t('No sources selected.'))); }
@@ -143,7 +143,8 @@
       once('bucketpilot-builder', '[data-bp-builder]', context).forEach((root) => {
         const find = (selector) => root.querySelector(selector);
         let draft; let optimistic = []; let contextVersion = 0; let connectionRefreshing = false;
-        let currentPath = ''; let rootCursor = null; let searching = false; let searchToken = '';
+        let currentPath = ''; let nextFiles = null; let previousFiles = null; let searchToken = '';
+        let retryFiles = () => loadFiles();
         let fileRequest; let bucketRequest; let bucketPage = 0; let bucketTotal = 0; let chosenBucket = '';
         let pathVersion = 0; let destinationMode = ''; let browserChoice = null; let pathAvailable = true; let destinationCheck = 0; let folderReady = false;
         let folderPage = 0; let folderPrefix = ''; let editingBucket = false; let editingPath = false;
@@ -189,11 +190,11 @@
           if (rebuild && !optimistic.length) { list.append(node('p', bucketpilotUI.t('Check a file or folder in the explorer to add it.'), 'bp-builder-hint')); }
           if (rebuild) { optimistic.forEach((rule) => {
             const item = node('div', undefined, `bp-rule ${rule.include ? '' : 'bp-rule-excluded'}`);
-            const label = node('span', rule.path || bucketpilotUI.t('Entire project'), `bp-entry-name bp-entry-name--${rule.directory ? 'folder' : 'file'}`);
+            const label = node('span', rule.path || bucketpilotUI.t('Entire source'), `bp-entry-name bp-entry-name--${rule.directory ? 'folder' : 'file'}`);
             const description = node('small', rule.include ? (rule.directory ? bucketpilotUI.t('Includes permitted descendants') : bucketpilotUI.t('Included file')) : bucketpilotUI.t('Excluded from inherited folder selection'));
             const text = node('div'); text.append(label, description);
             const remove = button(rule.include ? bucketpilotUI.t('Remove') : bucketpilotUI.t('Restore'), () => selectChange({...rule, include: !rule.include}));
-            remove.setAttribute('aria-label', `${rule.include ? bucketpilotUI.t('Remove') : bucketpilotUI.t('Restore')} ${rule.path || bucketpilotUI.t('project root')}`);
+            remove.setAttribute('aria-label', `${rule.include ? bucketpilotUI.t('Remove') : bucketpilotUI.t('Restore')} ${rule.path || bucketpilotUI.t('source root')}`);
             item.append(text, remove); list.append(item);
           }); }
           syncTree();
@@ -384,15 +385,40 @@
           window.clearTimeout(selectionTimer);
           selectionTimer = window.setTimeout(() => flushSelection().catch(() => {}), 150);
         };
-        const sourceRow = (entry, depth, searchResult = false) => {
+        const parentFolder = (path) => path.slice(0, Math.max(0, path.lastIndexOf('/')));
+        const renderBreadcrumb = (path) => {
+          const crumbs = find('[data-tree-path]');
+          const parts = path ? path.split('/') : [];
+          const home = find('[data-tree-home]');
+          home.toggleAttribute('aria-current', !parts.length);
+          if (!parts.length) { home.setAttribute('aria-current', 'location'); }
+          crumbs.replaceChildren(home.parentElement);
+          parts.forEach((part, index) => {
+            const crumb = node('li');
+            if (index === parts.length - 1) {
+              const current = node('span', part);
+              current.setAttribute('aria-current', 'location');
+              crumb.append(current);
+            } else {
+              const target = parts.slice(0, index + 1).join('/');
+              const focus = parts.slice(0, index + 2).join('/');
+              crumb.append(button(part, () => openFolder(target, focus), 'bp-crumb-link'));
+            }
+            crumbs.append(crumb);
+          });
+          find('[data-tree-back]').disabled = !path;
+        };
+        const sourceRow = (entry, depth, searchResult = false, currentFolder = false) => {
           const row = node('tr'); row.dataset.path = entry.path; row.dataset.depth = depth;
           const checkCell = node('td'); const check = document.createElement('input');
           check.type = 'checkbox'; check.dataset.sourcePath = entry.path;
           check.setAttribute('aria-label', bucketpilotUI.t('Select @path', {'@path': entry.path || bucketpilotUI.t('entire current folder')}));
           check.addEventListener('change', () => selectChange({path: entry.path, directory: entry.directory, include: partial(optimistic, entry.path) ? true : check.checked}));
           checkCell.append(check);
-          const name = node('td'); name.style.setProperty('--bp-tree-indent', `${12 + depth * 18}px`);
-          if (entry.directory && !searchResult && entry.path !== currentPath) {
+          const name = node('td'); name.style.setProperty('--bp-tree-indent', `${12 + depth * 26}px`);
+          const canExpand = entry.directory && !currentFolder;
+          const entryLayout = node('div', undefined, canExpand ? 'bp-source-entry' : 'bp-source-entry bp-source-entry--no-toggle');
+          if (canExpand) {
             const expand = button('', async () => {
               const expanded = expand.getAttribute('aria-expanded') === 'true';
               if (expanded) {
@@ -403,6 +429,7 @@
               expand.disabled = true; expand.setAttribute('aria-busy', 'true'); expand.removeAttribute('title');
               try {
                 const page = await read('files', {path: entry.path});
+                if (!row.isConnected) { return; }
                 if (find('[data-source-rows]').children.length + page.entries.length > 1000) { throw new Error(bucketpilotUI.t('Open this folder by its name to continue within the visible-row limit.')); }
                 let last = row;
                 page.entries.forEach((child) => { const childRow = sourceRow(child, depth + 1); last.after(childRow); last = childRow; });
@@ -413,59 +440,113 @@
               catch (error) { find('[data-tree-feedback]').textContent = error.message; expand.title = bucketpilotUI.t('Retry expanding this folder'); }
               finally { expand.disabled = false; expand.removeAttribute('aria-busy'); }
             }, 'bucketpilot-tree-toggle');
-            expand.setAttribute('aria-expanded', 'false'); expand.setAttribute('aria-label', bucketpilotUI.t('Expand or collapse @path', {'@path': entry.path})); name.append(expand);
+            expand.setAttribute('aria-expanded', 'false');
+            expand.setAttribute('aria-label', bucketpilotUI.t('Expand or collapse @path', {'@path': entry.path}));
+            entryLayout.append(expand);
           }
-          const label = node('span', entry.name || bucketpilotUI.t('Entire current folder'), `bp-entry-name bp-entry-name--${entry.directory ? 'folder' : 'file'}`);
-          if (entry.directory && !searchResult) { const open = button(entry.name || bucketpilotUI.t('Entire current folder'), () => openFolder(entry.path), 'bp-source-link'); label.replaceChildren(open); }
-          name.append(label);
+          const label = node('span', entry.name, `bp-entry-name bp-entry-name--${entry.directory ? 'folder' : 'file'}`);
+          if (entry.directory && !currentFolder) {
+            label.replaceChildren(button(entry.name, () => openFolder(entry.path), 'bp-source-link'));
+          }
+          const info = node('div', undefined, 'bp-source-result-info');
+          info.append(label);
+          if (currentFolder) {
+            row.classList.add('bp-source-current');
+            check.title = bucketpilotUI.t('Select this entire folder');
+          }
           if (searchResult) {
-            name.append(node('small', entry.path, 'bp-source-relative'));
-            name.append(button(bucketpilotUI.t('Reveal location'), () => openFolder(entry.path.includes('/') ? entry.path.slice(0, entry.path.lastIndexOf('/')) : '')));
+            const parent = parentFolder(entry.path);
+            info.append(node('div', parent || find('[data-tree-home]').textContent, 'bp-source-relative'));
+            if (!entry.directory) {
+              const reveal = button(bucketpilotUI.t('Reveal location'), () => openFolder(parent, entry.path), 'bp-reveal-location');
+              reveal.setAttribute('aria-label', bucketpilotUI.t('Reveal location of @name', {'@name': entry.name}));
+              entryLayout.append(reveal);
+            }
           }
-          row.append(checkCell, name, node('td', entry.directory ? '—' : new Intl.NumberFormat().format(entry.size)));
+          entryLayout.append(info);
+          name.append(entryLayout);
+          row.append(checkCell, name, node('td', entry.directory ? '—' : bucketpilotUI.bucketpilotDisplay.bytes(entry.size)));
           return row;
         };
-        const loadFiles = async (path = currentPath, offset = 0, append = false) => {
-          fileRequest?.abort(); fileRequest = new AbortController();
-          find('[data-source-rows]').setAttribute('aria-busy', 'true');
-          find('[data-tree-feedback]').textContent = bucketpilotUI.t('Loading eligible sources…');
+        const loadFiles = async (path = currentPath, options = {}) => {
+          const {offset = 0, append = false, focus = ''} = options;
+          fileRequest?.abort();
+          const request = new AbortController();
+          fileRequest = request;
+          const body = find('[data-source-rows]');
+          const scroller = find('.bp-tree-scroll');
+          body.setAttribute('aria-busy', 'true');
+          find('[data-tree-feedback]').textContent = bucketpilotUI.t('Loading files and folders…');
           find('[data-tree-retry]').hidden = true;
+          retryFiles = () => loadFiles(path, options);
           try {
-            const page = await read('files', {path, offset}, fileRequest.signal);
-            if (append && find('[data-source-rows]').children.length + page.entries.length > 1000) { throw new Error(bucketpilotUI.t('Open a child folder to continue within the visible-row limit.')); }
-            currentPath = path; searching = false; rootCursor = page.next;
-            const body = find('[data-source-rows]');
-            if (!append) { body.replaceChildren(sourceRow({name: bucketpilotUI.t('Entire current folder'), path, directory: true}, 0)); }
-            page.entries.forEach((entry) => body.append(sourceRow(entry, 0)));
-            find('[data-tree-path]').textContent = `project / ${path}`;
-            find('[data-tree-more]').hidden = page.next === null;
+            const page = await read('files', {path, offset, focus}, request.signal);
+            if (request !== fileRequest) { return; }
+            if (append && body.children.length + page.entries.length > 1000) {
+              throw new Error(bucketpilotUI.t('Open a child folder to continue within the visible-row limit.'));
+            }
+            currentPath = path;
+            nextFiles = page.next;
+            scroller.classList.remove('bp-tree-search-results');
+            if (!append) {
+              previousFiles = page.previous;
+              const name = path ? path.split('/').at(-1) : find('[data-tree-home]').textContent;
+              body.replaceChildren(sourceRow({name, path, directory: true}, 0, false, true));
+              scroller.scrollTop = 0;
+              renderBreadcrumb(path);
+            }
+            page.entries.forEach((entry) => body.append(sourceRow(entry, 1)));
+            find('[data-tree-previous]').hidden = previousFiles === null;
+            find('[data-tree-more]').hidden = nextFiles === null;
             find('[data-search-more]').hidden = true;
-            find('[data-tree-feedback]').textContent = page.entries.length ? bucketpilotUI.t('Select files and folders for your backup.') : bucketpilotUI.t('No eligible entries on this page. Excluded files are never shown.');
+            find('[data-tree-feedback]').textContent = page.entries.length ? '' : bucketpilotUI.t('This folder is empty.');
             syncTree();
+            const target = focus && [...body.children].find((row) => row.dataset.path === focus);
+            if (target) {
+              target.classList.add('bp-source-located');
+              const headerHeight = scroller.querySelector('thead').offsetHeight;
+              scroller.scrollTop += target.getBoundingClientRect().top - scroller.getBoundingClientRect().top - headerHeight;
+              target.querySelector('input').focus({preventScroll: true});
+            }
+          } catch (error) {
+            if (error.name !== 'AbortError') {
+              find('[data-tree-feedback]').textContent = error.message;
+              find('[data-tree-retry]').hidden = false;
+            }
+          } finally {
+            if (request === fileRequest) { body.removeAttribute('aria-busy'); }
           }
-          catch (error) { if (error.name !== 'AbortError') { find('[data-tree-feedback]').textContent = error.message; find('[data-tree-retry]').hidden = false; } }
-          finally { find('[data-source-rows]').removeAttribute('aria-busy'); }
         };
-        const openFolder = async (path) => {
-          find('#bp-file-search').value = ''; await flushSelection().catch(() => {});
-          await loadFiles(path);
+        const openFolder = async (path, focus = '') => {
+          window.clearTimeout(fileTimer);
+          find('#bp-file-search').value = '';
+          await flushSelection().catch(() => {});
+          await loadFiles(path, {focus});
         };
         const doSearch = async (continueSearch = false) => {
           const query = find('#bp-file-search').value.trim();
           if (query.length < 2) { if (!query) { loadFiles(); } return; }
           fileRequest?.abort(); fileRequest = new AbortController();
           if (!continueSearch) { searchToken = ''; }
-          searching = true; find('[data-tree-feedback]').textContent = bucketpilotUI.t('Searching permitted nested folders…');
+          retryFiles = () => doSearch(continueSearch);
+          find('[data-tree-retry]').hidden = true;
+          find('[data-tree-feedback]').textContent = bucketpilotUI.t('Searching permitted nested folders…');
           try {
             const result = await read('search', {q: query, token: searchToken}, fileRequest.signal);
             if (find('#bp-file-search').value.trim() !== query) { return; }
             searchToken = result.token;
+            find('.bp-tree-scroll').classList.add('bp-tree-search-results');
             const body = find('[data-source-rows]'); body.replaceChildren();
             result.entries.forEach((entry) => body.append(sourceRow(entry, 0, true)));
-            find('[data-tree-more]').hidden = true; find('[data-search-more]').hidden = result.done;
-            find('[data-tree-feedback]').textContent = `${result.entries.length} ${bucketpilotUI.t('matches')} · ${result.pages_checked} ${bucketpilotUI.t('directory pages checked')}. ${result.limited ? bucketpilotUI.t('Search limit reached. Narrow the query.') : (result.done ? bucketpilotUI.t('Search complete. Excluded files are never listed.') : bucketpilotUI.t('Continue to search more folders.'))}`;
+            find('[data-tree-previous]').hidden = true;
+            find('[data-tree-more]').hidden = true;
+            find('[data-search-more]').hidden = result.done;
+            find('.bp-tree-scroll').scrollTop = 0;
+            const count = bucketpilotUI.t(result.entries.length === 1 ? '@count match' : '@count matches', {'@count': result.entries.length});
+            const searchStatus = result.limited ? bucketpilotUI.t('Search limit reached. More matches may exist.') : (result.done ? '' : bucketpilotUI.t('Search more folders to continue.'));
+            find('[data-tree-feedback]').textContent = [count, searchStatus].filter(Boolean).join(' · ');
             if (result.skipped) { find('[data-tree-feedback]').textContent += ` ${result.skipped} ${bucketpilotUI.t('unavailable folders skipped')}.`; }
-            if (!result.entries.length) { body.append(node('tr')); const cell = node('td', bucketpilotUI.t('No eligible results found so far. Continue the bounded search if more folders remain.')); cell.colSpan = 3; body.lastChild.append(cell); }
+            if (!result.entries.length) { body.append(node('tr')); const cell = node('td', bucketpilotUI.t(result.done ? 'No matching files or folders.' : 'No matches yet.')); cell.colSpan = 3; body.lastChild.append(cell); }
             syncTree();
           }
           catch (error) { if (error.name !== 'AbortError') { find('[data-tree-feedback]').textContent = error.message; find('[data-tree-retry]').hidden = false; } }
@@ -575,11 +656,12 @@
         find('[data-file-search]').addEventListener('submit', (event) => { event.preventDefault(); doSearch(); });
         find('#bp-file-search').addEventListener('input', () => { window.clearTimeout(fileTimer); fileTimer = window.setTimeout(() => doSearch(), 550); });
         find('[data-clear-search]').addEventListener('click', () => openFolder(currentPath));
-        find('[data-tree-home]').addEventListener('click', () => openFolder(''));
-        find('[data-tree-back]').addEventListener('click', () => openFolder(currentPath.includes('/') ? currentPath.slice(0, currentPath.lastIndexOf('/')) : ''));
-        find('[data-tree-more]').addEventListener('click', () => { if (find('[data-source-rows]').children.length >= 1000) { find('[data-tree-feedback]').textContent = bucketpilotUI.t('Open a child folder to keep browsing within the visible-row limit.'); return; } loadFiles(currentPath, rootCursor, true); });
+        find('[data-tree-home]').addEventListener('click', () => openFolder('', currentPath.split('/')[0]));
+        find('[data-tree-back]').addEventListener('click', () => openFolder(parentFolder(currentPath), currentPath));
+        find('[data-tree-previous]').addEventListener('click', () => loadFiles(currentPath, {offset: previousFiles}));
+        find('[data-tree-more]').addEventListener('click', () => loadFiles(currentPath, {offset: nextFiles, append: true}));
         find('[data-search-more]').addEventListener('click', () => doSearch(true));
-        find('[data-tree-retry]').addEventListener('click', () => searching ? doSearch(true) : loadFiles());
+        find('[data-tree-retry]').addEventListener('click', () => retryFiles());
         find('[data-bucket-search]').addEventListener('submit', (event) => { event.preventDefault(); loadBuckets(0); });
         find('#bp-bucket-filter').addEventListener('input', () => { window.clearTimeout(bucketTimer); bucketTimer = window.setTimeout(() => loadBuckets(0), 400); });
         find('[data-buckets-previous]').addEventListener('click', () => loadBuckets(bucketPage - 1));
@@ -899,7 +981,7 @@
                 cell(row, stamp(item.next_run, item.config.schedule.timezone));
                 cell(row, stamp(item.last_run, item.config.schedule.timezone));
                 const status = cell(row); status.append(statusBadge(item.status));
-                if (item.pause_reason) { const reasons = {connection_changed: 'Restore the original API key to continue.', bucket_missing: 'The original bucket is unavailable.', settings_changed: 'Workspace or bucket settings no longer match.', context_unverified: 'Revalidate this plan with its original key.', access_unavailable: 'Original connection permissions are unavailable.', verification_unavailable: 'Connection verification is temporarily unavailable.'}; const message = bucketpilotUI.t(reasons[item.pause_reason] || 'Waiting for the original connection settings.'); status.title = message; status.append(node('span', message, 'visually-hidden')); }
+                if (item.pause_reason) { const reasons = {source_changed: 'Select files again and save this plan to use the current backup source.', connection_changed: 'Restore the original API key to continue.', bucket_missing: 'The original bucket is unavailable.', settings_changed: 'Workspace or bucket settings no longer match.', context_unverified: 'Revalidate this plan with its original key.', access_unavailable: 'Original connection permissions are unavailable.', verification_unavailable: 'Connection verification is temporarily unavailable.'}; const message = bucketpilotUI.t(reasons[item.pause_reason] || 'Waiting for the original connection settings.'); status.title = message; status.append(node('span', message, 'visually-hidden')); }
                 cell(row).append(recentIndicators(item));
                 const actions = cell(row); const group = node('div', undefined, 'bp-record-actions');
                 group.append(iconButton(bucketpilotUI.t('Details'), 'details', () => details(item.id)));

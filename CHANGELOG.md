@@ -1,5 +1,14 @@
 # Changelog
 
+## 18.0.2.0.0
+
+- Discover the Odoo filestore root automatically and browse folders and files from that level.
+- Upload individually selected filestore files by filename without their parent directories.
+- Upload files from a single filestore folder directly under the backup destination, preserving its internal paths.
+- Support an optional administrator-configured source directory without a Git dependency.
+- Allow a server-designated database's Odoo Settings administrators to back up the full filestore. Other databases have access to their own folder.
+- Require source reselection for existing plans before running them against the new source.
+
 ## 18.0.1.0.0
 
 First public release of BucketPilot for Odoo 18.

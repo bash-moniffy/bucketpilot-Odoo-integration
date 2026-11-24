@@ -5,7 +5,6 @@ import json
 import os
 import re
 import stat
-import subprocess
 import tempfile
 import time
 import zlib
@@ -265,12 +264,14 @@ PATTERNS = """settings* *credential* *secret* *api*key* *service-account*.json .
 MAX_FILE = 512 * 1024 * 1024
 
 
-def path_parts(path):
+def path_parts(path, custom=False):
     if not isinstance(path, str) or len(path.encode()) > 700 or re.search(r"[\x00-\x1f\x7f\\]", path):
-        raise BackupError("Invalid project-relative path.")
+        raise BackupError("Invalid backup source path.")
     parts = path.split("/") if path else []
-    if any(not part or part in (".", "..") or part.lower() in BLOCKED or
-           any(fnmatch.fnmatchcase(part.lower(), pattern) for pattern in PATTERNS) for part in parts):
+    if any(not part or part in (".", "..") for part in parts):
+        raise BackupError("Invalid backup source path.")
+    if custom and any(part in BLOCKED or any(fnmatch.fnmatchcase(part, pattern) for pattern in PATTERNS)
+                      for part in map(str.lower, parts)):
         raise BackupError("The source is excluded by the backup policy.")
     return parts
 
@@ -285,84 +286,60 @@ def selected(rules, path):
     return max(matching, key=lambda rule: len(rule["path"]))["include"] if matching else False
 
 
-def default_project_root(addon):
-    addons = addon.resolve().parent
-    candidates = [addons]
-    if addons.name in ("addons", "custom-addons", "custom_addons", "extra-addons"):
-        candidates.insert(0, addons.parent)
-    markers = ("odoo-bin", "compose.yaml", "compose.yml", "docker-compose.yaml", "docker-compose.yml", ".gitignore")
-    for root in candidates:
-        git = root / ".git"
-        if any((root / marker).is_file() for marker in markers) or (
-            not git.is_symlink() and (git.is_dir() or git.is_file())
-        ):
-            return root
-    raise BackupError("The project root could not be detected. Set BUCKETPILOT_PROJECT_ROOT to the approved Odoo project directory.")
-
-
 class Sources:
-    def __init__(self):
-        value = os.environ.get("BUCKETPILOT_PROJECT_ROOT")
-        location = Path(value) if value else default_project_root(Path(__file__).parent)
-        if not location.is_absolute() or location.resolve() != location or not location.is_dir():
-            raise BackupError("The approved project directory is not available.")
-        self.root = location
+    def __init__(self, database):
+        if not database or Path(database).name != database or database in (".", ".."):
+            raise BackupError("The database name cannot identify a filestore directory.")
+        override = os.environ.get("BUCKETPILOT_PROJECT_ROOT")
+        self.custom = bool(override)
         data = Path(config["data_dir"]).resolve()
-        self.secret = Path(os.environ.get("BUCKETPILOT_SECRET_DIRECTORY") or data / "bucketpilot-secrets").resolve()
-        if location == Path("/") or location == Path.home() or location == data or data in location.parents or self.secret == location or self.secret in location.parents:
-            raise BackupError("Choose a dedicated Odoo source directory outside protected storage.")
-        self.protected = [data, self.secret, Path(config.rcfile).resolve()]
-        self.root_device = location.stat().st_dev
+        self.root = Path(override) if self.custom else data / "filestore"
+        self.database_scope = (
+            database if not self.custom and os.environ.get("BUCKETPILOT_FILESTORE_ADMIN_DB") != database else None
+        )
+        secret = Path(os.environ.get("BUCKETPILOT_SECRET_DIRECTORY") or data / "bucketpilot-secrets").resolve()
+        self.protected = [secret, Path(config.rcfile).resolve()]
+        if self.custom:
+            self.protected.append(data)
+        if self.custom:
+            binding = os.fsencode(str(self.root)) + b"\x01"
+        else:
+            binding = os.fsencode(str(self.root)) + b"\x00" + os.fsencode(database)
+            binding += b"\x00" if self.database_scope else b"\x01"
+        self.binding = hashlib.sha256(binding).hexdigest()
 
-    def ignored(self, paths):
-        if not paths:
-            return set()
-        try:
-            with tempfile.TemporaryDirectory() as metadata:
-                local_git = self.root / ".git"
-                if not local_git.exists():
-                    subprocess.run(["git", "init", "--bare", "-q", metadata], check=True,
-                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=3)
-                    git = metadata
-                elif local_git.is_symlink():
-                    raise BackupError("The project Git metadata cannot be verified.")
-                else:
-                    git = str(local_git) if local_git.is_dir() else None
-                # Discover only the root's linked worktree metadata when .git is a regular file.
-                command = ["git", "-c", f"safe.directory={self.root}", "-C", str(self.root)]
-                if git:
-                    command += ["--git-dir", git, "--work-tree", str(self.root)]
-                result = subprocess.run(command + ["check-ignore", "--no-index", "--stdin", "-z"],
-                                        input=b"\0".join(os.fsencode(path) for path in paths) + b"\0",
-                                        capture_output=True, timeout=5)
-            if result.returncode not in (0, 1):
-                raise BackupError("Git ignore rules could not be verified.")
-            return set(os.fsdecode(path).rstrip("/") for path in result.stdout.split(b"\0") if path)
-        except (OSError, subprocess.SubprocessError):
-            raise BackupError("Git ignore rules could not be verified.") from None
+    def verify(self, backup):
+        if backup.get("source_binding") != self.binding:
+            raise BackupError("The backup source changed. Select files again and save the plan, or create a new backup.",
+                              "source_changed")
 
     @contextmanager
-    def opened(self, path, directory=None, git=True):
-        parts = path_parts(path)
-        if any(block == self.root.joinpath(*parts) or block in self.root.joinpath(*parts).parents for block in self.protected):
+    def opened(self, path, directory=None):
+        parts = path_parts(path, custom=self.custom)
+        if self.database_scope and parts and parts[0] != self.database_scope:
+            raise BackupError("This database is not authorized to back up that filestore path.")
+        target = self.root.joinpath(*parts)
+        if any(block == target or block in target.parents for block in self.protected):
             raise BackupError("The source is inside protected storage.")
         fd = None
         try:
+            if (not self.root.is_absolute() or self.root.resolve() != self.root or
+                    (self.custom and self.root in (Path("/"), Path.home()))):
+                raise BackupError("The configured backup source is unavailable or unsafe.")
             fd = os.open(self.root, os.O_RDONLY | os.O_NOFOLLOW | os.O_DIRECTORY)
+            root_device = os.fstat(fd).st_dev
             for index, part in enumerate(parts):
                 require_dir = index < len(parts) - 1 or directory is True
                 child = os.open(part, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW |
                                 (os.O_DIRECTORY if require_dir else 0), dir_fd=fd)
                 os.close(fd)
                 fd = child
-                if os.fstat(fd).st_dev != self.root_device:
+                if os.fstat(fd).st_dev != root_device:
                     raise BackupError("Mounted data directories are excluded.")
             item = os.fstat(fd)
             is_dir = stat.S_ISDIR(item.st_mode)
             if (not is_dir and (not stat.S_ISREG(item.st_mode) or item.st_nlink != 1)) or (directory is not None and directory != is_dir):
                 raise BackupError("The source is not a permitted file or folder.")
-            if git and path and path in self.ignored([path + "/" if is_dir else path]):
-                raise BackupError("The source is excluded by Git ignore rules.")
             yield fd, item
         except OSError:
             raise BackupError("The source is unavailable or is a symbolic link.") from None
@@ -377,19 +354,17 @@ class Sources:
             for index, child in enumerate(children):
                 if index >= 50000 or time.monotonic() > deadline:
                     raise BackupError("This folder exceeds the browsing limit.")
+                if not path and self.database_scope and child.name != self.database_scope:
+                    continue
                 relative = f"{path}/{child.name}" if path else child.name
                 try:
-                    with self.opened(relative, git=False) as (_, item):
+                    with self.opened(relative) as (_, item):
                         directory = stat.S_ISDIR(item.st_mode)
                         entries.append(dict(path=relative, name=child.name, directory=directory,
                                             size=None if directory else item.st_size))
                 except (BackupError, UnicodeError):
                     continue
-        ignored = set()
-        for start in range(0, len(entries), 5000):
-            ignored.update(self.ignored([row["path"] + ("/" if row["directory"] else "")
-                                         for row in entries[start:start + 5000]]))
-        return sorted((row for row in entries if row["path"] not in ignored),
+        return sorted(entries,
                       key=lambda row: (not row["directory"], natural(row["name"])))
 
     @contextmanager

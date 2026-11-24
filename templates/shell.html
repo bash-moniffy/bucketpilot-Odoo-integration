@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ title }} · BucketPilot</title>
-{% for stylesheet in styles %}<link rel="stylesheet" href="/bucketpilot/static/css/{{ stylesheet }}.css">{% endfor %}
+{% for stylesheet in styles %}<link rel="stylesheet" href="{{ stylesheet }}">{% endfor %}
 <link rel="icon" href="/bucketpilot/static/description/icon.png">
 <script type="application/json" id="bp-settings">{{ settings|tojson }}</script>
-{% for script in scripts %}<script defer src="/bucketpilot/static/js/{{ script }}.js"></script>{% endfor %}
+{% for script in scripts %}<script defer src="{{ script }}"></script>{% endfor %}
 </head><body class="{{ 'bp-connection-page' if active == 'connection' }}{{ ' bp-embedded-page' if embedded }}">
 {% if active == 'connection' and not embedded %}
 <nav class="bp-odoo-breadcrumb" aria-label="Breadcrumb">
@@ -30,6 +30,6 @@
   </nav>
   <div class="bp-page-heading"><div><p class="bp-eyebrow">{{ 'WORKSPACE / ODOO' }}</p><h1>{{ title }}</h1><p class="bp-description">{{ description }}</p></div><span class="bp-integration-label">{{ 'BucketPilot for Odoo' }}</span></div>
   <div class="bp-content">{% include template %}</div>
-  <footer class="bp-footer"><span>{{ 'BucketPilot · Secure storage, connected.' }}</span><span>{{ 'Project sources stay within your approved backup boundary.' }}</span></footer>
+  <footer class="bp-footer"><span>{{ 'BucketPilot · Secure storage, connected.' }}</span><span>{{ 'Backup files stay within the configured source.' }}</span></footer>
 </section>
 </body></html>

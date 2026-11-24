@@ -1,19 +1,25 @@
 <div class="bp-builder" data-bp-builder>
   {% if not worker_recent %}<p class="bp-notice" role="status">{{ 'No recent independent worker was detected. Requests stay pending until the Odoo scheduled action runs; opening this page does not process backups.' }}</p>{% endif %}
   {% if editing %}<div class="bp-edit-page-context"><div><strong>{{ 'Editing saved plan' }}</strong><span>{{ edit_name }}</span></div></div>{% endif %}
+  {% if source_review %}<p class="bp-notice" role="status">{{ 'The backup source changed. Select files or folders from the current source, then save the plan.' }}</p>{% endif %}
   <div class="bp-builder-toolbar"><div><span class="bp-draft-label">{{ 'PLAN EDITOR' if editing else 'BACKUP BUILDER' }}</span><p>{{ 'Select sources on the left. Configure and review your backup on the right.' }}</p></div><span class="bp-save-state" role="status" aria-live="polite" data-save-state>{{ 'Loading draft…' }}</span>{% with attribute_name='data-reload-draft', title='Reload the saved backup draft' %}{% include 'refresh.html' %}{% endwith %}</div>
   <div class="bp-builder-alert" role="alert" data-builder-error hidden></div>
 
   <nav aria-label="{{ 'Backup setup progress' }}"><ol class="bp-setup-progress">{% for step in [{'key':'name','label':'Backup name'},{'key':'bucket','label':'Bucket'},{'key':'path','label':'Folder'},{'key':'selection','label':'Sources'},{'key':'schedule','label':'Schedule'}] %}<li data-progress="{{ step.key }}"><button type="button" data-open-step="{{ step.key }}" {% if step.key == 'path' %}disabled{% endif %} aria-controls="bp-step-{{ step.key }}"><span class="bp-progress-marker">{{ loop.index }}</span><span>{{ step.label }}</span><span class="visually-hidden" data-progress-state></span></button></li>{% endfor %}</ol></nav>
   <div class="bp-builder-grid">
     <section class="bp-source-panel bp-card" aria-labelledby="bp-source-heading">
-      <div class="bp-card-heading"><div><p class="bp-eyebrow">{{ 'APPROVED ODOO PROJECT' }}</p><h2 id="bp-source-heading">{{ 'Files & folders' }}</h2></div><span class="bp-pill" data-tree-count>0 {{ 'selected rules' }}</span></div>
-      <p class="bp-builder-hint">{{ 'Only permitted project sources are shown. Sensitive, Git-ignored and unsafe paths stay excluded.' }}</p>
+      <div class="bp-card-heading"><div><p class="bp-eyebrow">{{ 'CUSTOM BACKUP SOURCE' if source_custom else 'ODOO FILESTORE' }}</p><h2 id="bp-source-heading">{{ 'Files & folders' }}</h2></div><span class="bp-pill" data-tree-count>0 {{ 'selected rules' }}</span></div>
+      <p class="bp-builder-hint">{% if source_custom %}Browse files in the approved source. Protected and unsafe paths are excluded.{% elif source_database %}Open <strong>{{ source_database }}</strong> to browse its files. Filestore files use Odoo’s internal filenames.{% else %}Browse folders and files in the Odoo filestore. Filestore files use Odoo’s internal filenames.{% endif %}</p>
       <form class="bp-explorer-search bp-search-controls" data-file-search><label for="bp-file-search">{{ 'Search nested files and folders' }}</label><div class="bp-inline"><input type="search" id="bp-file-search" maxlength="100" placeholder="{{ 'Search by name or relative path…' }}"><button class="button" type="button" data-clear-search>{{ 'Clear Search' }}</button></div></form>
-      <nav class="bp-tree-breadcrumb" aria-label="{{ 'Current project directory' }}"><button type="button" class="button" data-tree-home>{{ 'Project root' }}</button><span data-tree-path>/</span><button type="button" class="button" data-tree-back>{{ 'Up' }}</button></nav>
+      <nav class="bp-tree-breadcrumb" aria-label="{{ 'Current source directory' }}">
+        <ol class="bp-tree-path" data-tree-path>
+          <li><button type="button" class="button" data-tree-home>{{ 'Source root' if source_custom else 'Filestore root' }}</button></li>
+        </ol>
+        <button type="button" class="button" data-tree-back disabled>{{ 'Up' }}</button>
+      </nav>
       <p class="bp-builder-hint" role="status" aria-live="polite" data-tree-feedback></p>
-      <div class="bp-tree-scroll" tabindex="0" role="region" aria-label="{{ 'Project source explorer' }}"><table class="bp-builder-tree"><thead><tr><th>{{ 'Select' }}</th><th>{{ 'Source / relative path' }}</th><th>{{ 'Size' }}</th></tr></thead><tbody data-source-rows></tbody></table></div>
-      <div class="bp-inline bp-tree-actions"><button class="button" type="button" data-tree-more hidden>{{ 'Load more' }}</button><button class="button" type="button" data-search-more hidden>{{ 'Search more folders' }}</button><button class="button" type="button" data-tree-retry hidden>{{ 'Retry' }}</button></div>
+      <div class="bp-tree-scroll" tabindex="0" role="region" aria-label="{{ 'Backup source explorer' }}"><table class="bp-builder-tree"><thead><tr><th>{{ 'Select' }}</th><th>{{ 'Name' }}</th><th>{{ 'Size' }}</th></tr></thead><tbody data-source-rows></tbody></table></div>
+      <div class="bp-inline bp-tree-actions"><button class="button" type="button" data-tree-previous hidden>{{ 'Previous files' }}</button><button class="button" type="button" data-tree-more hidden>{{ 'Load more' }}</button><button class="button" type="button" data-search-more hidden>{{ 'Search more folders' }}</button><button class="button" type="button" data-tree-retry hidden>{{ 'Retry' }}</button></div>
       <p class="bp-builder-hint">{{ 'Selecting a folder includes its permitted contents. Uncheck a child to exclude it. A mixed checkbox means only some contents are selected.' }}</p>
       <noscript><p class="messages messages--warning">{{ 'This builder needs JavaScript for persistent selections and scheduling. Enable JavaScript to continue; existing jobs continue independently.' }}</p></noscript>
     </section>
