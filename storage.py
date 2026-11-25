@@ -4,12 +4,14 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import stat
 import tempfile
 import time
 import zlib
 from contextlib import contextmanager
 from pathlib import Path
+from uuid import uuid4
 from urllib.parse import parse_qs, quote, urlsplit
 
 import requests
@@ -21,6 +23,14 @@ class BackupError(Exception):
         super().__init__(message)
         self.code = code
         self.delay = delay
+
+
+def stream_digest(stream, algorithm):
+    digest = hashlib.new(algorithm)
+    for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+        digest.update(chunk)
+    stream.seek(0)
+    return digest.hexdigest()
 
 
 class Credential:
@@ -117,7 +127,7 @@ class BucketPilotAPI:
                     if status == 404:
                         raise BackupError("The requested storage entry was not found.", "missing")
                     if status in (401, 403):
-                        raise BackupError("BucketPilot rejected access. Check the key, plan and write permissions.", "access")
+                        raise BackupError("BucketPilot rejected access. Check the key, plan and bucket permissions.", "access")
                     if status not in (200, 201, 204):
                         raise BackupError(f"BucketPilot rejected the request (HTTP {status}).")
                     if empty:
@@ -211,8 +221,7 @@ class BucketPilotAPI:
     def confirm(self, bucket, key):
         self.request(self.endpoint(bucket, "/objects/confirm"), body={"key": key}, empty=True)
 
-    def put(self, bucket, key, provider, stream, size):
-        url = self.presign(bucket, key)
+    def _signed_query(self, url, provider):
         try:
             parts = urlsplit(url if isinstance(url, str) else "")
             host = parts.hostname or ""
@@ -221,9 +230,47 @@ class BucketPilotAPI:
             trusted = host.endswith(suffixes.get(provider, ())) or (provider == "gcs" and host == "storage.googleapis.com")
             if not trusted or parts.scheme != "https" or parts.username is not None or parts.password is not None or parts.fragment or parts.port not in (None, 443):
                 raise BackupError("BucketPilot returned an unsupported storage endpoint.")
-            query = parse_qs(parts.query, keep_blank_values=True, max_num_fields=100)
+            return parse_qs(parts.query, keep_blank_values=True, max_num_fields=100)
         except ValueError:
             raise BackupError("BucketPilot returned an invalid storage endpoint.") from None
+
+    def metadata(self, bucket, key):
+        return self.request(self.endpoint(bucket, "/objects/metadata"), params={"key": key})
+
+    def download(self, bucket, key, provider, stream, size, version=None, progress=None):
+        body = {"key": key, "expiresIn": 600}
+        if version:
+            body["versionId"] = version
+        url = self.request(self.endpoint(bucket, "/objects/download"), body=body).get("downloadUrl")
+        self._signed_query(url, provider)
+        try:
+            with requests.Session() as session:
+                session.trust_env = False
+                with session.get(url, stream=True, timeout=(5, 45), allow_redirects=False,
+                                 headers={"Accept-Encoding": "identity"}) as response:
+                    if response.status_code == 404:
+                        raise BackupError("The file was not found in the bucket.", "missing")
+                    if response.status_code in (401, 403):
+                        raise BackupError("Storage denied access to this file.", "access")
+                    if response.status_code in (408, 429) or response.status_code >= 500:
+                        raise BackupError("Storage is temporarily unavailable.", "temporary")
+                    if response.status_code != 200:
+                        raise BackupError(f"Storage rejected the download (HTTP {response.status_code}).")
+                    for chunk in response.iter_content(1024 * 1024):
+                        if stream.tell() + len(chunk) > size:
+                            raise BackupError("The download exceeds the size recorded in the backup.", "checksum")
+                        stream.write(chunk)
+                        if progress:
+                            progress(stream.tell())
+        except requests.RequestException:
+            raise BackupError("Download interrupted. It can be retried.", "temporary") from None
+        if stream.tell() != size:
+            raise BackupError("The download size differs from the backup.", "checksum")
+        stream.seek(0)
+
+    def put(self, bucket, key, provider, stream, size):
+        url = self.presign(bucket, key)
+        query = self._signed_query(url, provider)
         checksum = query.get("x-amz-checksum-crc32")
         if checksum:
             crc = 0
@@ -268,7 +315,7 @@ def path_parts(path, custom=False):
     if not isinstance(path, str) or len(path.encode()) > 700 or re.search(r"[\x00-\x1f\x7f\\]", path):
         raise BackupError("Invalid backup source path.")
     parts = path.split("/") if path else []
-    if any(not part or part in (".", "..") for part in parts):
+    if any(not part or part in (".", "..") or part.startswith(".bucketpilot-restore-") for part in parts):
         raise BackupError("Invalid backup source path.")
     if custom and any(part in BLOCKED or any(fnmatch.fnmatchcase(part, pattern) for pattern in PATTERNS)
                       for part in map(str.lower, parts)):
@@ -313,14 +360,18 @@ class Sources:
             raise BackupError("The backup source changed. Select files again and save the plan, or create a new backup.",
                               "source_changed")
 
-    @contextmanager
-    def opened(self, path, directory=None):
+    def _parts(self, path):
         parts = path_parts(path, custom=self.custom)
         if self.database_scope and parts and parts[0] != self.database_scope:
             raise BackupError("This database is not authorized to back up that filestore path.")
         target = self.root.joinpath(*parts)
         if any(block == target or block in target.parents for block in self.protected):
             raise BackupError("The source is inside protected storage.")
+        return parts
+
+    @contextmanager
+    def opened(self, path, directory=None):
+        parts = self._parts(path)
         fd = None
         try:
             if (not self.root.is_absolute() or self.root.resolve() != self.root or
@@ -366,6 +417,79 @@ class Sources:
                     continue
         return sorted(entries,
                       key=lambda row: (not row["directory"], natural(row["name"])))
+
+    @contextmanager
+    def _restore_parent(self, path, created=None):
+        if self.custom:
+            raise BackupError("Restore is available only for Odoo filestore backups.")
+        parts = self._parts(path)
+        if not parts:
+            raise BackupError("Choose a recorded filestore file.")
+        flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_DIRECTORY
+        fd = os.open(self.root.parent, flags)
+        try:
+            device = None
+            for index, part in enumerate([self.root.name, *parts[:-1]]):
+                try:
+                    child = os.open(part, flags, dir_fd=fd)
+                except FileNotFoundError:
+                    if created is None:
+                        raise
+                    try:
+                        os.mkdir(part, mode=0o700, dir_fd=fd)
+                        created.append("/".join(parts[:index]) or "Filestore root")
+                    except FileExistsError:
+                        pass
+                    child = os.open(part, flags, dir_fd=fd)
+                os.close(fd)
+                fd = child
+                current_device = os.fstat(fd).st_dev
+                if device is not None and current_device != device:
+                    raise BackupError("Restore cannot write across mounted source directories.")
+                device = current_device
+            yield fd, parts[-1]
+        finally:
+            os.close(fd)
+
+    def _existing_file(self, fd, name):
+        try:
+            item = os.stat(name, dir_fd=fd, follow_symlinks=False)
+        except FileNotFoundError:
+            return False
+        if not stat.S_ISREG(item.st_mode):
+            raise BackupError("The restore target is a directory or an unsafe link.")
+        return True
+
+    def restore_exists(self, path):
+        try:
+            with self._restore_parent(path) as (fd, name):
+                return self._existing_file(fd, name)
+        except FileNotFoundError:
+            return False
+        except OSError:
+            raise BackupError("The local restore path is unsafe or cannot be accessed.") from None
+
+    def restore_file(self, path, stream, created):
+        try:
+            with self._restore_parent(path, created) as (fd, name):
+                if self._existing_file(fd, name):
+                    return False
+                staging = ".bucketpilot-restore-" + uuid4().hex
+                flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW
+                with os.fdopen(os.open(staging, flags, 0o600, dir_fd=fd), "wb") as destination:
+                    try:
+                        shutil.copyfileobj(stream, destination, 1024 * 1024)
+                        destination.flush()
+                        os.fsync(destination.fileno())
+                        try:
+                            os.link(staging, name, src_dir_fd=fd, dst_dir_fd=fd, follow_symlinks=False)
+                        except FileExistsError:
+                            return False
+                        return True
+                    finally:
+                        os.unlink(staging, dir_fd=fd)
+        except OSError:
+            raise BackupError("The file could not be written to the local filestore.") from None
 
     @contextmanager
     def snapshot(self, path):

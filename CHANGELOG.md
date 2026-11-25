@@ -1,5 +1,16 @@
 # Changelog
 
+## 18.0.2.1.1
+
+- Review individual-file and all-file restores in a dialog and record the reason before queuing.
+- Show live restore stages and transfer progress, with a searchable restore history.
+- Align Restore History with Backup History and show pending and running schedules first by default.
+
+## 18.0.2.1.0
+
+- Restore a confirmed file, source folder, or finished backup to its original filestore paths without overwriting local files.
+- Show the exact object key in Backup History and track background restore progress and file outcomes in Restore History.
+
 ## 18.0.2.0.0
 
 - Discover the Odoo filestore root automatically and browse folders and files from that level.

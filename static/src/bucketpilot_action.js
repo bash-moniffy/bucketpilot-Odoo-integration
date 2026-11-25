@@ -5,7 +5,7 @@ import { registry } from "@web/core/registry";
 const HOME = "/bucketpilot";
 const ID = "[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}";
 const PAGE = new RegExp(
-    `^${HOME}(?:/(?:connection|buckets|backups|schedules(?:/${ID}/edit)?|history(?:/${ID}(?:/cancel|/resume)?)?))?$`
+    `^${HOME}(?:/(?:connection|buckets|backups|schedules(?:/${ID}/edit)?|history(?:/${ID}(?:/cancel|/resume|/restore)?)?|restores(?:/${ID})?))?$`
 );
 
 function pagePath(value) {

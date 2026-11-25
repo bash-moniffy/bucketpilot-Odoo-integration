@@ -1,7 +1,7 @@
 {
     "name": "BucketPilot",
     "summary": "Connect BucketPilot and schedule Odoo filestore backups",
-    "version": "18.0.2.0.0",
+    "version": "18.0.2.1.1",
     "category": "Administration",
     "license": "GPL-2",
     "depends": ["web", "mail"],

@@ -1,5 +1,12 @@
 <section class="bp-backup-detail" data-backup-detail>
-  <a class="bp-back-link" href="{{ links.history }}">{{ 'Back to Backup History' }}</a>
+  <div class="bp-restore-toolbar">
+    <a class="bp-back-link" href="{{ links.history }}">Back to Backup History</a>
+    {% if restore_enabled %}
+    <button type="button" class="button bp-restore-all" data-open-restore="{{ restore_route }}" aria-haspopup="dialog">
+      {% with icon='restore' %}{% include 'restore-icon.html' %}{% endwith %}<span>Restore all backup folders &amp; files</span>
+    </button>
+    {% endif %}
+  </div>
   <section class="bp-card bp-execution-card" id="bucketpilot-backup-progress" data-bp-tone="{{ backup.tone }}">
     <header class="bp-detail-hero"><div><p class="bp-eyebrow">{{ 'BACKUP EXECUTION' }}</p><h2>{{ backup.name }}</h2></div><span class="bp-job-status" data-detail-status data-bp-status="{{ backup.status }}" data-bp-tone="{{ backup.tone }}">{{ backup.status_label }}</span></header>
     <div class="bp-execution-progress">
@@ -34,13 +41,16 @@
       {% if not backup.source_count %}<p>{{ 'No source information recorded.' }}</p>{% endif %}
     </div>
   </section>
-  <section class="bp-card bp-detail-section"><div class="bp-file-activity-heading"><div><h3>{{ 'File activity' }}</h3><p>{{ 'Recorded file checkpoints. Refresh to see the latest entries.' }}</p></div><a class="button bp-refresh-icon" href="{{ links.refresh }}" aria-label="{{ 'Refresh file activity' }}" title="{{ 'Refresh file activity' }}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 7a7 7 0 0 1 11.6-1L20 9M4 15l2.3 3A7 7 0 0 0 17.9 17"/></svg></a></div><div class="bp-table-scroll bp-backup-audit-scroll" tabindex="0" role="region" aria-label="{{ 'Backup file activity' }}"><table><thead><tr>{% for label in ['Source', 'Destination', 'Checkpoint', 'Size', 'Attempts / retry', 'Issue'] %}<th scope="col">{{ label }}</th>{% endfor %}</tr></thead>
+  <section class="bp-card bp-detail-section"><div class="bp-file-activity-heading"><div><h3>{{ 'File activity' }}</h3><p>{{ 'Recorded file checkpoints. Refresh to see the latest entries.' }}</p></div><a class="button bp-refresh-icon" href="{{ links.refresh }}" aria-label="{{ 'Refresh file activity' }}" title="{{ 'Refresh file activity' }}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 7a7 7 0 0 1 11.6-1L20 9M4 15l2.3 3A7 7 0 0 0 17.9 17"/></svg></a></div><div class="bp-table-scroll bp-backup-audit-scroll" tabindex="0" role="region" aria-label="{{ 'Backup file activity' }}"><table><thead><tr>{% for label in ['Source', 'Destination', 'Checkpoint', 'Size', 'Attempts / retry', 'Issue'] %}<th scope="col">{{ label }}</th>{% endfor %}{% if restore_enabled %}<th scope="col">Actions</th>{% endif %}</tr></thead>
   <tbody>{% for item in items %}<tr>
-    <td>{{ item.path }}</td><td>{{ backup.prefix }}{{ item.path }}</td><td>{{ item.state|replace('_', ' ')|capitalize }}</td>
+    <td>{{ item.path }}</td><td>{{ object_keys[item.id] or '—' }}</td><td>{{ item.state|replace('_', ' ')|capitalize }}</td>
     <td title="{{ item.size }} B">{{ human_bytes(item.size) }}</td><td>{{ item.attempts }}{% if item.next_retry %}<br><small>{{ item.next_retry }} UTC</small>{% endif %}</td><td>{{ item.error or '—' }}</td>
-  </tr>{% else %}<tr><td colspan="6">No file checkpoints recorded yet.</td></tr>{% endfor %}</tbody></table></div><div class="bp-execution-pager"><nav class="bp-audit-control" aria-label="File activity pages">
+    {% if restore_enabled %}<td>{% if item.state == 'done' %}<button type="button" class="button bp-restore-icon" data-open-restore="{{ restore_route }}?mode=file&amp;file={{ item.id }}" aria-label="Restore file" title="Restore file" aria-haspopup="dialog">{% with icon='restore' %}{% include 'restore-icon.html' %}{% endwith %}</button>{% endif %}</td>{% endif %}
+  </tr>{% else %}<tr><td colspan="{{ 7 if restore_enabled else 6 }}">No file checkpoints recorded yet.</td></tr>{% endfor %}</tbody></table></div><div class="bp-execution-pager"><nav class="bp-audit-control" aria-label="File activity pages">
     {% if page > 0 %}<a class="button bp-page-control bp-page-previous" href="{{ route }}?page={{ page - 1 }}">Previous</a>{% endif %}
     {% if (page + 1) * 25 < total %}<a class="button bp-page-control bp-page-next" href="{{ route }}?page={{ page + 1 }}">Next</a>{% endif %}
   </nav></div></section>
   <details class="bp-card bp-execution-technical"><summary>{{ 'Technical details' }}</summary><dl class="bp-detail-grid"><div><dt>{{ 'Backup ID' }}</dt><dd><code>{{ backup.id }}</code></dd></div><div><dt>{{ 'Scan errors' }}</dt><dd data-progress-value="scan_errors">{{ backup.scan_errors }}</dd></div></dl><p data-progress-technical-summary>{{ backup.summary }}</p></details>
 </section>
+
+{% if restore_enabled %}{% include 'restore-request.html' %}{% endif %}

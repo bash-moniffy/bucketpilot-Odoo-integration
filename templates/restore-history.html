@@ -1,0 +1,42 @@
+<section class="bp-card bp-records" data-mode="history">
+  <div class="bp-card-heading">
+    <div><h2>Restore requests</h2><p>Review restore results and reasons.</p></div>
+  </div>
+  <form id="bp-restore-filters" class="bp-record-filters bp-search-controls" method="get" action="/bucketpilot/restores">
+    <div><label for="bp-restore-search">Search</label><input id="bp-restore-search" type="search" name="q" maxlength="100"
+        value="{{ query }}" placeholder="Backup name, file path or reason"></div>
+    <div><label for="bp-restore-status">Status</label><select id="bp-restore-status" name="status">
+      <option value="">All statuses</option>
+      {% for value, label in states.items() %}<option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select></div>
+    <button class="button">Search</button>
+    <a class="button" href="/bucketpilot/restores?size={{ size }}">Clear Filters</a>
+    <a class="button bp-refresh-icon" href="{{ page_url }}&amp;page={{ page }}" aria-label="Refresh restore history" title="Refresh restore history">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 7a7 7 0 0 1 11.6-1L20 9M4 15l2.3 3A7 7 0 0 0 17.9 17"/></svg>
+    </a>
+  </form>
+  <div class="bp-table-scroll bp-record-scroll" tabindex="0" role="region" aria-label="Restore execution history"><table>
+    <thead><tr><th scope="col">Backup name</th><th scope="col">Reason</th><th scope="col">Requested</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
+    <tbody>
+      {% for row in rows %}<tr>
+        <td><div class="bp-cell-stack"><strong>{{ row.backup_name }}</strong><small>{{ row.source_path or 'Entire backup' }}</small></div></td>
+        <td>{{ row.reason or '—' }}</td>
+        <td><div class="bp-cell-stack"><span>{{ labels[row.id] }}</span><small>{{ row.requester_id.name or '—' }}</small></div></td>
+        <td><span class="bp-job-status" data-bp-tone="{{ tones[row.state] }}">{{ states[row.state] }}</span></td>
+        <td><div class="bp-record-actions"><a class="button bp-action-icon bp-action-details" href="/bucketpilot/restores/{{ row.public_id }}" aria-label="View restore for {{ row.backup_name }}" title="View restore">{% with icon='view' %}{% include 'restore-icon.html' %}{% endwith %}</a></div></td>
+      </tr>{% else %}<tr><td colspan="5">{{ 'No matching restores. Try another search or status.' if query or status else 'No restores yet. Open a finished backup to start restoring files.' }}</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+  <p class="bp-results-summary" role="status">{{ total }} {{ 'result' if total == 1 else 'results' }} · Page {{ page + 1 }} / {{ pages }}</p>
+  <div class="bp-pagination">
+    <div class="bp-pagination-meta">
+      <div class="bp-page-size"><label for="bp-restore-size">Records per page</label><select id="bp-restore-size" form="bp-restore-filters" name="size" data-restore-page-size>
+        {% for option in [10, 25, 50] %}<option value="{{ option }}" {% if size == option %}selected{% endif %}>{{ option }}</option>{% endfor %}
+      </select></div>
+    </div>
+    {% if pages > 1 %}<nav class="bp-pager-actions" aria-label="Restore history pages">
+      {% if page %}<a class="button bp-page-control bp-page-previous" href="{{ page_url }}&amp;page={{ page - 1 }}">Previous</a>{% endif %}
+      {% if page + 1 < pages %}<a class="button bp-page-control bp-page-next" href="{{ page_url }}&amp;page={{ page + 1 }}">Next</a>{% endif %}
+    </nav>{% endif %}
+  </div>
+</section>

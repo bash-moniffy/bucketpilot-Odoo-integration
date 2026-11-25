@@ -8,4 +8,13 @@
         <field name="interval_number">1</field>
         <field name="interval_type">minutes</field>
     </record>
+    <record id="cron_bucketpilot_restore" model="ir.cron">
+        <field name="name">BucketPilot: Process restore requests</field>
+        <field name="model_id" ref="model_bucketpilot_restore"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_process()</field>
+        <field name="user_id" ref="base.user_root"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">minutes</field>
+    </record>
 </odoo>
