@@ -33,8 +33,14 @@
   </div>
 
   <div class="mb-4">
-    <h2>Restore backed-up files</h2>
-    <p>An Odoo Settings administrator can restore an individual file or an entire backup from Backup History. A background worker downloads the recorded objects and restores missing files to their original filestore paths. Files already present are skipped. Restore History records the reason, progress and result of each file.</p>
+    <h2>Restore Odoo filestore files</h2>
+    <p>Start from Backup History, choose an individual file or the entire backup, and enter a reason in the review dialog. The worker uses the exact object key from the backup to download missing files and return them to their original filestore paths.</p>
+    <ul>
+      <li>Restore a file or all confirmed files in a backup. Existing local files are skipped.</li>
+      <li>Follow live progress as the worker checks the bucket, downloads, verifies and writes files.</li>
+      <li>Use Restore History to find past requests and see the reason, original paths, created folders and per-file results. Retry missing or failed files from the request details.</li>
+    </ul>
+    <img src="restore-details.png" class="img-fluid rounded border" alt="BucketPilot restore details in Odoo showing completed progress, restored and existing file counts, and per-file bucket keys and original paths">
   </div>
 
   <div class="border rounded p-3">
