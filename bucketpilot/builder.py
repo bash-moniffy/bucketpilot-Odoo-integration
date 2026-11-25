@@ -18,6 +18,7 @@ STATUSES = {
     "connected": "Connected", "configured": "Key configured", "disconnected": "Disconnected",
     "error": "Needs attention", "limited": "Directory limit reached",
 }
+SCHEDULE_PRIORITY = {"pending": 0, "queued": 0, "scanning": 1, "running": 1}
 TONES = {
     "connected": "success", "ready": "success", "active": "success", "completed": "success", "done": "success",
     "pending": "info", "queued": "info", "scanning": "info", "running": "info", "configured": "info",
@@ -416,11 +417,15 @@ class Builder:
         raise BackupError("This operation is unavailable for the current execution status.")
 
     def _clear_history(self):
-        runs = self.Run.search([("archived", "=", False), ("state", "in", TERMINAL)], order="id", limit=101)
+        preparing = [("seeded", "=", False), ("state", "in", ("queued", "preparing"))]
+        runs = self.Run.search([("archived", "=", False), ("state", "in", TERMINAL),
+                                ("restore_ids", "not any", preparing)], order="id", limit=101)
         for run in runs[:100]:
             self.env.cr.execute("SELECT id FROM bucketpilot_run WHERE id = %s FOR UPDATE", [run.id])
             run.invalidate_recordset()
-            if run.state in TERMINAL and not run.archived:
+            pending_restore = self.env["bucketpilot.restore"].search_count(
+                [("backup_id", "=", run.id), *preparing], limit=1)
+            if run.state in TERMINAL and not run.archived and not pending_restore:
                 if not run.notification_sent:
                     run._queue_email()
                 self.Item.search([("run_id", "=", run.id)]).unlink()
@@ -529,7 +534,7 @@ class Builder:
         elif frequency in ("now", "once") and recent:
             status = recent[0].state
         else:
-            status = "active"
+            status = next((run["status"] for run in runs if run["status"] in SCHEDULE_PRIORITY), "active")
         actions = []
         if source_changed:
             if self.editable(plan):
@@ -542,7 +547,7 @@ class Builder:
         return {"id": plan.public_id, "name": plan.name, "revision": plan.revision, "frequency": frequency,
                 "data": plan.config, "config": plan.config, "bucket_label": plan.config["bucket"]["name"],
                 "destination": plan.config["prefix"] or "/", "status": status, "pause_reason": reason or "",
-                "next_run": timestamp(plan.next_date), "last_run": timestamp(plan.last_date),
+                "created": timestamp(plan.create_date), "next_run": timestamp(plan.next_date), "last_run": timestamp(plan.last_date),
                 "recent_runs": runs, "latest_execution": runs[0] if runs else None, "actions": actions}
 
     def run_row(self, run):
@@ -564,15 +569,18 @@ class Builder:
             domain = [("deleted", "=", False)]
             if params.get("saved"):
                 domain.append(("public_id", "=", public_id(params["saved"])))
-            rows = [self.plan_row(row) for row in self.Plan.search(domain)]
+            rows = [self.plan_row(row) for row in self.Plan.search(domain, order="create_date desc, id desc")]
             if query:
                 rows = [row for row in rows if query in " ".join(str(row[key]) for key in ("name", "id", "bucket_label", "destination")).casefold()]
             if status:
                 rows = [row for row in rows if row["status"] == status]
-            key = params.get("sort", "next_run")
-            key = key if key in ("next_run", "name", "last_run", "status") else "next_run"
-            rows.sort(key=lambda row: (row[key].casefold() if isinstance(row[key], str) else row[key], row["name"].casefold()),
-                      reverse=params.get("direction") == "desc")
+            key = params.get("sort", "priority")
+            if key in ("next_run", "name", "last_run", "status", "created"):
+                rows.sort(key=lambda row: (row[key].casefold() if isinstance(row[key], str) else row[key],
+                                           row["name"].casefold()), reverse=params.get("direction") == "desc")
+            else:
+                direction = 1 if params.get("direction") == "asc" else -1
+                rows.sort(key=lambda row: (SCHEDULE_PRIORITY.get(row["status"], 2), direction * row["created"]))
             return page_slice(rows, page, size)
         domain = [("archived", "=", False)]
         if status:

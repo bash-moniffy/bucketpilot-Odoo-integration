@@ -11,7 +11,7 @@ from odoo import api, fields, models
 from odoo.tools import SQL
 
 from ..calendar import next_run
-from ..storage import BackupError, BucketPilotAPI, Credential, Sources, fingerprint, selected
+from ..storage import BackupError, BucketPilotAPI, Credential, Sources, fingerprint, selected, stream_digest
 
 _logger = logging.getLogger(__name__)
 MAIL_TEMPLATES = Environment(
@@ -120,6 +120,7 @@ class BackupRun(models.Model):
     plan_public_id = fields.Char(index=True)
     name = fields.Char(required=True)
     config = fields.Json(required=True)
+    restore_ids = fields.One2many("bucketpilot.restore", "backup_id")
     credential = fields.Char()
     identity = fields.Char()
     execution_type = fields.Char(required=True)
@@ -259,6 +260,15 @@ class BackupRun(models.Model):
         else:
             folder.state = "done"
 
+    def _object_key(self, item):
+        self.ensure_one()
+        if item.object_key:
+            return item.object_key
+        folder = self.config.get("destination_source_folder")
+        relative_path = item.path.removeprefix(folder + "/") if folder else item.path
+        object_path = (self.config.get("destination_flat_files") or {}).get(item.path, relative_path)
+        return self.prefix + object_path if self.prefix else ""
+
     def _file(self, sources, client, bucket):
         now = fields.Datetime.now()
         items = self.env["bucketpilot.item"]
@@ -277,16 +287,15 @@ class BackupRun(models.Model):
         self.next_retry = False
         self.error = False
         try:
-            folder = self.config.get("destination_source_folder")
-            relative_path = item.path.removeprefix(folder + "/") if folder else item.path
-            object_path = (self.config.get("destination_flat_files") or {}).get(item.path, relative_path)
-            key = self.prefix + object_path
+            key = self._object_key(item)
             if len(key.encode()) > 1024:
                 raise BackupError("The object key exceeds the storage length limit.")
             if item.state == "pending":
                 with sources.snapshot(item.path) as (stream, size):
+                    checksum = stream_digest(stream, "sha256")
                     client.put(bucket["id"], key, bucket["provider"], stream, size)
-                item.write({"size": size, "state": "put", "attempts": 0, "error": False, "next_retry": False})
+                item.write({"size": size, "object_key": key, "content_sha256": checksum, "state": "put",
+                            "attempts": 0, "error": False, "next_retry": False})
             else:
                 client.confirm(bucket["id"], key)
                 item.write({"state": "done", "attempts": item.attempts + 1, "error": False, "next_retry": False})
@@ -467,6 +476,8 @@ class BackupItem(models.Model):
 
     run_id = fields.Many2one("bucketpilot.run", required=True, index=True, ondelete="cascade")
     path = fields.Char(required=True)
+    object_key = fields.Char()
+    content_sha256 = fields.Char()
     kind = fields.Selection([("directory", "Directory"), ("file", "File")], required=True)
     state = fields.Selection([(key, title) for key, title in (
         ("pending", "Pending"), ("put", "Uploaded, awaiting confirmation"), ("done", "Confirmed"),

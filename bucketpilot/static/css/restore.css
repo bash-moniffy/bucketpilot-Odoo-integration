@@ -1,0 +1,501 @@
+@layer bucketpilot.visibility, bucketpilot.components, bucketpilot.reset;
+@layer bucketpilot.components {
+  .bucketpilot-ui .bp-restore-toolbar,
+  .bucketpilot-ui .bp-restore-list-head {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .bucketpilot-ui .bp-restore-toolbar .bp-back-link {
+    margin-block: 0 !important;
+  }
+
+  .bucketpilot-ui :is(.bp-restore-list-head, .bp-restore-dialog .bp-detail-header) :is(h2, h3, p) {
+    margin: 0 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .bucketpilot-ui :is(.bp-restore-list-head, .bp-restore-dialog .bp-detail-header) p,
+  .bucketpilot-ui .bp-restore-secondary,
+  .bucketpilot-ui .bp-restore-note,
+  .bucketpilot-ui .bp-restore-progress-meta {
+    color: #53657b !important;
+    font-size: 12px !important;
+    line-height: 1.5 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) clamp(260px, 27%, 340px) !important;
+    gap: 16px !important;
+    align-items: stretch !important;
+    margin-bottom: 16px !important;
+  }
+
+  .bucketpilot-ui :is(.bp-restore-progress, .bp-restore-history) {
+    min-width: 0 !important;
+    padding: 22px !important;
+  }
+
+  .bucketpilot-ui .bp-restore-progress-status,
+  .bucketpilot-ui .bp-restore-progress-meta {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: space-between !important;
+    gap: 2px 12px !important;
+  }
+
+  .bucketpilot-ui .bp-restore-progress-status {
+    gap: 6px 16px !important;
+    font-weight: 650 !important;
+    margin: 22px 0 8px !important;
+  }
+
+  .bucketpilot-ui .bp-restore-progress-status strong {
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .bucketpilot-ui .bp-restore-progress {
+    --bp-restore-fill: #c65618 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-progress[data-state="completed"] {
+    --bp-restore-fill: #22804f !important;
+  }
+
+  .bucketpilot-ui .bp-restore-progress[data-state="completed_with_issues"] {
+    --bp-restore-fill: #a56611 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-progress[data-state="failed"] {
+    --bp-restore-fill: #a63040 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-progress progress {
+    display: block !important;
+    width: 100% !important;
+    height: 12px !important;
+    appearance: none !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: #e6edf5 !important;
+    accent-color: var(--bp-restore-fill) !important;
+    overflow: hidden !important;
+    margin-bottom: 7px !important;
+  }
+
+  .bucketpilot-ui .bp-restore-progress progress::-webkit-progress-bar {
+    background: #e6edf5 !important;
+    border-radius: 999px !important;
+  }
+
+  .bucketpilot-ui .bp-restore-progress progress::-webkit-progress-value {
+    background: var(--bp-restore-fill) !important;
+    border-radius: 999px !important;
+    transition: width .42s ease, background .25s ease !important;
+  }
+
+  .bucketpilot-ui .bp-restore-progress progress::-moz-progress-bar {
+    background: var(--bp-restore-fill) !important;
+    border-radius: 999px !important;
+    transition: width .42s ease, background .25s ease !important;
+  }
+
+  .bucketpilot-ui .bp-restore-current {
+    overflow-wrap: anywhere !important;
+    margin-top: 8px !important;
+    font-family: ui-monospace, monospace !important;
+    font-size: 12px !important;
+  }
+
+  .bucketpilot-ui .bp-restore-metrics {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)) !important;
+    gap: 8px !important;
+    margin: 18px 0 0 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-metrics > div {
+    background: #f4f7fb !important;
+    border-radius: 8px !important;
+    padding: 10px !important;
+  }
+
+  .bucketpilot-ui :is(.bp-restore-metrics, .bp-restore-info, .bp-restore-review) dt {
+    color: #53657b !important;
+    font-size: 12px !important;
+  }
+
+  .bucketpilot-ui :is(.bp-restore-metrics, .bp-restore-info, .bp-restore-review) dd {
+    margin: 3px 0 0 !important;
+    overflow-wrap: anywhere !important;
+    color: #243445 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-metrics dd {
+    font-size: 21px !important;
+    font-weight: 700 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-info {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    min-width: 0 !important;
+    padding: 15px 16px !important;
+  }
+
+  .bucketpilot-ui .bp-restore-info h3 {
+    margin: 0 !important;
+    font-size: 15px !important;
+    line-height: 1.35 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-info dl {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 11px 12px !important;
+    margin: 0 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-info dt {
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-info dd {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-info .bp-restore-reason {
+    grid-column: 1 / -1 !important;
+    padding: 8px 10px !important;
+    border-radius: 6px !important;
+    border-inline-start: 2px solid #cf8655 !important;
+    background: #faf6f2 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-info .bp-restore-reason dd {
+    font-weight: 500 !important;
+    text-align: start !important;
+  }
+
+  .bucketpilot-ui .bp-restore-info .bp-restore-time {
+    border-top: 1px solid #e7edf3 !important;
+    padding-top: 8px !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .bucketpilot-ui .bp-restore-info-footer {
+    display: flex !important;
+    justify-content: flex-end !important;
+    margin-top: auto !important;
+    padding-top: 9px !important;
+    border-top: 1px solid #e7edf3 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-info-footer .bp-restore-retry {
+    min-height: 30px !important;
+    gap: 5px !important;
+    padding: 3px 8px !important;
+    color: #964016 !important;
+    border-color: #ead8cb !important;
+    box-shadow: none !important;
+    font-size: 11px !important;
+  }
+
+  .bucketpilot-ui .bp-restore-retry svg {
+    width: 14px !important;
+    height: 14px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-dialog {
+    width: min(650px, calc(100vw - 28px)) !important;
+    max-height: calc(100dvh - 28px) !important;
+  }
+
+  .bucketpilot-ui .bp-restore-dialog form {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-dialog .bp-detail-header {
+    padding: 16px 20px !important;
+    background: #f4faf8 !important;
+    border-bottom-color: #dbece6 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-dialog .bp-detail-header h2 {
+    font-size: 19px !important;
+    line-height: 1.3 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-dialog [data-restore-name] {
+    margin-top: 2px !important;
+  }
+
+  .bucketpilot-ui .bp-restore-dialog .bp-detail-close {
+    flex-basis: 30px !important;
+    min-height: 30px !important;
+    height: 30px !important;
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    font-size: 19px !important;
+  }
+
+  .bucketpilot-ui .bp-restore-dialog .bp-detail-close:hover {
+    background: #e5f1eb !important;
+  }
+
+  .bucketpilot-ui .bp-restore-dialog .bp-detail-body {
+    padding: 18px 20px !important;
+  }
+
+  .bucketpilot-ui .bp-restore-review {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 22px !important;
+    margin: 0 0 10px !important;
+  }
+
+  .bucketpilot-ui .bp-restore-review > div {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) !important;
+    align-items: baseline !important;
+    gap: 4px 8px !important;
+    position: relative !important;
+    min-width: 0 !important;
+    padding: 9px 12px !important;
+    border: 1px solid #e0e7ef !important;
+    border-radius: 8px !important;
+    background: #f7f9fc !important;
+  }
+
+  .bucketpilot-ui .bp-restore-review .bp-restore-target {
+    background: #f3faf7 !important;
+    border-color: #dbece6 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-target::before {
+    content: '↓' !important;
+    position: absolute !important;
+    inset-inline-start: calc(50% - 15px) !important;
+    inset-block-start: -24px !important;
+    width: 30px !important;
+    color: #537e73 !important;
+    text-align: center !important;
+    font-size: 17px !important;
+    line-height: 24px !important;
+  }
+
+  .bucketpilot-ui .bp-restore-review .bp-restore-location-name {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-review dd {
+    margin: 0 !important;
+    min-width: 0 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-review dd:last-child {
+    grid-column: 1 / -1 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-review code {
+    display: block !important;
+    overflow-x: auto !important;
+    direction: ltr !important;
+    text-align: start !important;
+    white-space: nowrap !important;
+    overflow-wrap: normal !important;
+    font: 11px/1.55 ui-monospace, monospace !important;
+  }
+
+  .bucketpilot-ui .bp-restore-dialog .bp-restore-note {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: baseline !important;
+    gap: 2px 10px !important;
+    padding: 8px 10px !important;
+    margin: 0 0 16px !important;
+    background: #f6f8fb !important;
+    border-radius: 6px !important;
+  }
+
+  .bucketpilot-ui .bp-restore-note strong {
+    color: #275b4d !important;
+  }
+
+  .bucketpilot-ui .bp-restore-alert {
+    color: #942938 !important;
+    background: #fff1f3 !important;
+    margin: 10px 0 !important;
+    padding: 9px 12px !important;
+    border-radius: 7px !important;
+  }
+
+  .bucketpilot-ui .bp-restore-dialog textarea {
+    width: 100% !important;
+    min-height: 72px !important;
+    margin-top: 5px !important;
+    resize: vertical !important;
+  }
+
+  .bucketpilot-ui .bp-restore-dialog textarea:focus {
+    border-color: #287766 !important;
+    outline: 2px solid #28776638 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-dialog label {
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 7px !important;
+    font-size: 12px !important;
+    font-weight: 650 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-dialog label span {
+    color: #53657b !important;
+    font-size: 11px !important;
+    font-weight: 400 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-dialog .bp-detail-footer {
+    gap: 8px !important;
+    padding: 12px 20px !important;
+    background: #fbfcfd !important;
+  }
+
+  .bucketpilot-ui .bp-restore-dialog .bp-detail-footer .button {
+    min-height: 36px !important;
+    padding: 6px 12px !important;
+  }
+
+  .bucketpilot-ui .bp-restore-dialog .button--primary:not(:disabled) {
+    color: #fff !important;
+    border-color: #155c52 !important;
+    background: #155c52 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-dialog .button--primary:not(:disabled):hover {
+    border-color: #23796b !important;
+    background: #23796b !important;
+  }
+
+  .bucketpilot-ui .bp-restore-table {
+    border: 1px solid #dce5ee !important;
+    border-radius: 8px !important;
+  }
+
+  .bucketpilot-ui .bp-restore-table table {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-table table :is(th, td) {
+    padding: 10px 12px !important;
+    font-size: 12px !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    vertical-align: middle !important;
+  }
+
+  .bucketpilot-ui .bp-restore-table th {
+    background: #f4f7fb !important;
+  }
+
+  .bucketpilot-ui .button.bp-restore-icon {
+    display: inline-grid !important;
+    place-items: center !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    padding: 0 !important;
+    vertical-align: middle !important;
+  }
+
+  .bucketpilot-ui .button.bp-restore-all {
+    display: inline-flex !important;
+    gap: 7px !important;
+    min-height: 34px !important;
+    padding: 6px 11px !important;
+    color: #fff !important;
+    border-color: #155c52 !important;
+    background: #155c52 !important;
+  }
+
+  .bucketpilot-ui .button.bp-restore-all:hover {
+    color: #fff !important;
+    border-color: #23796b !important;
+    background: #23796b !important;
+  }
+
+  .bucketpilot-ui :is(.bp-restore-icon, .bp-restore-all) svg {
+    width: 16px !important;
+    height: 16px !important;
+    display: block !important;
+    flex-shrink: 0 !important;
+    pointer-events: none !important;
+  }
+
+  .bucketpilot-ui :is(.bp-restore-icon, .bp-restore-all):focus-visible {
+    outline: 2px solid #2366a1 !important;
+    outline-offset: 2px !important;
+  }
+
+  .bucketpilot-ui .bp-restore-badge {
+    display: inline-flex !important;
+    color: #40556e !important;
+    background: #eaf0f8 !important;
+    padding: 4px 9px !important;
+    border-radius: 20px !important;
+    font-size: 11px !important;
+    font-weight: 650 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-badge:is([data-state="completed"], [data-state="restored"]) {
+    color: #21613e !important;
+    background: #e5f5eb !important;
+  }
+
+  .bucketpilot-ui .bp-restore-badge:is([data-state="completed_with_issues"], [data-state="missing"]) {
+    color: #784b12 !important;
+    background: #fff1d9 !important;
+  }
+
+  .bucketpilot-ui .bp-restore-badge[data-state="failed"] {
+    color: #912435 !important;
+    background: #fce8ed !important;
+  }
+
+  @media (max-width: 800px) {
+    .bucketpilot-ui .bp-restore-layout {
+      grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    .bucketpilot-ui .bp-restore-table table {
+      min-width: 460px !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bucketpilot-ui .bp-restore-progress progress::-webkit-progress-value {
+      transition: none !important;
+    }
+
+    .bucketpilot-ui .bp-restore-progress progress::-moz-progress-bar {
+      transition: none !important;
+    }
+  }
+}

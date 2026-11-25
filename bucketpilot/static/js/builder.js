@@ -959,7 +959,7 @@
             find('[data-saved-plan-filter]').hidden = !savedPlan;
             find('[data-saved-plan-label]').textContent = savedPlan ? bucketpilotUI.t('Showing saved schedule: @name', {'@name': data.rows[0]?.name || bucketpilotUI.t('Unavailable')}) : '';
             const feedback = find('[data-record-feedback]');
-            const explanation = mode === 'plans' ? bucketpilotUI.t('Status describes the plan. Last five runs go from oldest to newest; gray means no earlier history. Times use each plan’s timezone.') : bucketpilotUI.t('Times are shown in UTC. Open details for file activity and errors.');
+            const explanation = mode === 'plans' ? bucketpilotUI.t('Pending and queued schedules appear first by default, followed by scanning and running schedules. Last five runs are shown oldest to newest.') : bucketpilotUI.t('Times are shown in UTC. Open details for file activity and errors.');
             if (feedback.textContent !== explanation) { feedback.textContent = explanation; }
             const responseSignature = JSON.stringify({data, filters});
             if (responseSignature === lastResponse) { return; }
@@ -1053,8 +1053,21 @@
         find('[data-record-filters]').addEventListener('submit', (event) => { event.preventDefault(); load(true); });
         find('#bp-record-search').addEventListener('input', () => { savedPlan = ''; window.clearTimeout(timer); timer = window.setTimeout(() => load(true), 450); });
         find('#bp-record-size').addEventListener('change', () => load(true));
-        root.querySelectorAll('[data-record-filters] select').forEach((select) => select.addEventListener('change', () => load(true)));
-        find('[data-clear-filters]').addEventListener('click', () => { find('[data-record-filters]').reset(); savedPlan = ''; query.delete('plan'); bucketpilotUI.replaceAddress(window.location.pathname); load(true); });
+        const setScheduleOrderLabel = () => {
+          if (mode !== 'plans') { return; }
+          const timeOrder = ['priority', 'created', 'last_run'].includes(find('#bp-record-sort').value);
+          const order = find('#bp-record-direction');
+          order.options[0].textContent = bucketpilotUI.t(timeOrder ? 'Newest first' : 'Descending');
+          order.options[1].textContent = bucketpilotUI.t(timeOrder ? 'Oldest first' : 'Ascending');
+        };
+        root.querySelectorAll('[data-record-filters] select').forEach((select) => select.addEventListener('change', () => {
+          if (select.id === 'bp-record-sort') {
+            find('#bp-record-direction').value = ['priority', 'created', 'last_run'].includes(select.value) ? 'desc' : 'asc';
+            setScheduleOrderLabel();
+          }
+          load(true);
+        }));
+        find('[data-clear-filters]').addEventListener('click', () => { find('[data-record-filters]').reset(); setScheduleOrderLabel(); savedPlan = ''; query.delete('plan'); bucketpilotUI.replaceAddress(window.location.pathname); load(true); });
         find('[data-clear-history]')?.addEventListener('click', async (event) => {
           if (!await bucketpilotUI.bucketpilotConfirm(bucketpilotUI.t('Delete all finished, failed and cancelled backup history? Active jobs, saved plans and remote files will remain.'), {label: bucketpilotUI.t('Delete history'), destructive: true})) { return; }
           event.target.disabled = true; let count = 0;

@@ -15,7 +15,8 @@ from odoo.http import request
 
 from ..calendar import TIMEZONES
 from ..builder import Builder, Conflict, STATUSES, TONES, page_slice, public_id, value_text
-from ..models.backup import ACTIVE, human_bytes
+from ..models.backup import ACTIVE, TERMINAL, human_bytes, timestamp
+from ..models.restore import ITEM_STATES, RESTORE_STATES
 from ..storage import BackupError
 
 
@@ -29,11 +30,12 @@ NAV = {
     "backups": ("/bucketpilot/backups", "Backups", "Select backup files, choose a destination and review before starting."),
     "schedules": ("/bucketpilot/schedules", "Backup Schedules", "Manage recurring plans, one-time schedules and their execution history."),
     "history": ("/bucketpilot/history", "Backup History", "Follow background jobs and inspect their saved progress and file records."),
+    "restores": ("/bucketpilot/restores", "Restore History", "Follow filestore restores and see the outcome for each file."),
 }
 CONNECTION_PAGES = {"overview", "connection", "buckets"}
-STYLES = ["isolation", "dashboard", "table-ui", "display", "connection", "builder", "backup-details", "odoo"]
+STYLES = ["isolation", "dashboard", "table-ui", "display", "connection", "builder", "backup-details", "restore", "odoo"]
 SCRIPTS = ["bootstrap", "confirmation", "notifications", "ajax-feedback", "connection-context", "table-ui",
-           "builder", "backup-progress", "dashboard", "actions", "request-progress"]
+           "builder", "backup-progress", "dashboard", "actions", "request-progress", "restore-progress"]
 NO_CACHE = [("Cache-Control", "private, no-store"), ("X-Content-Type-Options", "nosniff"),
             ("Referrer-Policy", "same-origin")]
 EMPTY_ID = "00000000-0000-0000-0000-000000000000"
@@ -55,7 +57,7 @@ SCRIPT_URLS = asset_urls("js", SCRIPTS, "js")
 def number(value, default, max_value=100000):
     if value is None:
         return default
-    if not isinstance(value, str) or not value.isascii() or not value.isdigit() or len(value) > 8:
+    if not isinstance(value, str) or not value.isascii() or not value.isdigit() or len(value) > max(8, len(str(max_value))):
         raise BackupError("Invalid page or offset.")
     return min(int(value), max_value)
 
@@ -121,7 +123,7 @@ class BucketPilot(http.Controller):
             logo_url="/bucketpilot/static/description/bucketpilot-logo.svg",
             connection=connection,
             navigation=[dict(url=url, label=label, active=active == key)
-                        for key, (url, label, _) in NAV.items() if admin or key not in CONNECTION_PAGES],
+                        for key, (url, label, _) in NAV.items() if admin or key not in CONNECTION_PAGES | {"restores"}],
             worker_recent=bool(recent and time.time() - recent.replace(tzinfo=timezone.utc).timestamp() < 150),
             settings=options, csrf=csrf, timezones=sorted(TIMEZONES), **values)
         return request.make_response(content, headers=[
@@ -350,9 +352,126 @@ class BucketPilot(http.Controller):
         total = builder.Item.search_count(domain)
         page = min(page, max(0, (total - 1) // 25))
         items = builder.Item.search(domain, limit=25, offset=25 * page, order="id")
+        restore_enabled = (
+            admin and not builder.sources.custom and run.state in TERMINAL and progress["successful"]
+            and run.config.get("source_binding") == builder.sources.binding
+        )
+        restore_route = route + "/restore"
         return self._page(builder, admin, "history", "backup-detail.html", title="Backup details",
                           links=links, backup=progress, items=items, page=page, total=total, route=route,
+                          object_keys={item.id: run._object_key(item)
+                                       if item.object_key or item.state in ("put", "done") else "" for item in items},
+                          restore_route=restore_route, restore_enabled=restore_enabled,
                           human_bytes=human_bytes, settings=settings)
+
+    @http.route("/bucketpilot/history/<string:run_id>/restore", auth="user", type="http", methods=["GET", "POST"])
+    def restore_request(self, run_id, **params):
+        builder, admin = self._access(admin=True)
+        if redirect := self._open_in_odoo():
+            return redirect
+        try:
+            backup = builder.run(run_id)
+        except BackupError:
+            raise NotFound() from None
+        restore = builder.env["bucketpilot.restore"]
+        mode = params.get("mode", "backup")
+        if "application/json" not in request.httprequest.headers.get("Accept", ""):
+            return request.redirect(f"/bucketpilot/history/{backup.public_id}", code=303)
+        try:
+            if mode not in ("backup", "file"):
+                raise BackupError("Choose an individual file or the entire backup.")
+            item_id = number(params.get("file") or None, 0, 2147483647)
+            if request.httprequest.method == "POST":
+                with request.env.cr.savepoint():
+                    row = restore._enqueue(backup, request.env.uid, mode, item_id, params.get("reason"))
+                return self._json({"url": f"/bucketpilot/restores/{row.public_id}"})
+            review = restore._review(backup, mode, item_id, "")
+            return self._json({**review, "name": backup.name, "bucket": backup.config["bucket"]["name"]})
+        except BackupError as issue:
+            return self._json({"error": str(issue)}, 422)
+
+    @http.route("/bucketpilot/restores", auth="user", type="http", methods=["GET"])
+    def restore_history(self, **params):
+        builder, admin = self._access(admin=True)
+        if redirect := self._open_in_odoo():
+            return redirect
+        page = number(params.get("page"), 0)
+        size = number(params.get("size"), 10, 50)
+        size = size if size in (10, 25, 50) else 10
+        query = value_text(params.get("q", ""), 100)
+        status = params.get("status", "")
+        states = dict(RESTORE_STATES)
+        domain = []
+        if query:
+            domain.extend(["|", "|", ("backup_name", "ilike", query), ("reason", "ilike", query),
+                           ("source_path", "ilike", query)])
+        if status in states:
+            domain.append(("state", "=", status))
+        else:
+            status = ""
+        model = builder.env["bucketpilot.restore"]
+        total = model.search_count(domain)
+        pages = max(1, (total + size - 1) // size)
+        page = min(page, pages - 1)
+        rows = model.search(domain, offset=page * size, limit=size)
+        filters = {"q": query, "status": status, "size": size}
+        page_url = "/bucketpilot/restores?" + urlencode(filters)
+        return self._page(builder, admin, "restores", "restore-history.html", rows=rows, query=query, status=status,
+                          page=page, pages=pages, size=size, total=total, states=states, page_url=page_url,
+                          tones={"queued": "info", "preparing": "info", "running": "info", "completed": "success",
+                                 "completed_with_issues": "warning", "failed": "danger"},
+                          labels={row.id: date_text(timestamp(row.create_date), builder.zone) for row in rows})
+
+    def _restore_record(self, builder, restore_id):
+        try:
+            return builder._record(builder.env["bucketpilot.restore"], restore_id)
+        except BackupError:
+            raise NotFound() from None
+
+    def _restore_files(self, restore, page):
+        items = restore.env["bucketpilot.restore.item"]
+        return items.search([("restore_id", "=", restore.id)], offset=page * 25, limit=25)
+
+    @http.route("/bucketpilot/restores/<string:restore_id>", auth="user", type="http", methods=["GET"])
+    def restore_detail(self, restore_id, **params):
+        builder, admin = self._access(admin=True)
+        if redirect := self._open_in_odoo():
+            return redirect
+        restore = self._restore_record(builder, restore_id)
+        page = number(params.get("page"), 0)
+        route = f"/bucketpilot/restores/{restore.public_id}"
+        return self._page(
+            builder, admin, "restores", "restore-detail.html", title="Restore details", route=route,
+            restore=restore, page=page, report=restore._summary(), items=self._restore_files(restore, page),
+            states=dict(ITEM_STATES), started=date_text(timestamp(restore.started), builder.zone),
+            finished=date_text(timestamp(restore.finished), builder.zone),
+            settings={"bucketpilotRestore": f"{route}/progress?page={page}"},
+        )
+
+    @http.route("/bucketpilot/restores/<string:restore_id>/progress", auth="user", type="http", methods=["GET"])
+    def restore_progress(self, restore_id, **params):
+        builder, _ = self._access(admin=True)
+        restore = self._restore_record(builder, restore_id)
+        rows = self._restore_files(restore, number(params.get("page"), 0))
+        states = dict(ITEM_STATES)
+        return self._json({**restore._summary(),
+                           "started": date_text(timestamp(restore.started), builder.zone),
+                           "finished": date_text(timestamp(restore.finished), builder.zone),
+                           "items": [
+            {"id": row.id, "state": row.state, "label": states[row.state], "error": row.error or "",
+             "created_folders": row.created_folders or [], "source_path": row.source_path, "object_key": row.object_key}
+            for row in rows
+        ]})
+
+    @http.route("/bucketpilot/restores/<string:restore_id>/retry", auth="user", type="http", methods=["POST"])
+    def restore_retry(self, restore_id, **params):
+        builder, _ = self._access(admin=True)
+        restore = self._restore_record(builder, restore_id)
+        try:
+            restore._retry()
+        except BackupError as issue:
+            return self._json({"error": str(issue)}, 409)
+        return request.redirect(f"/bucketpilot/restores/{restore.public_id}", code=303)
 
     @http.route("/bucketpilot/history/<string:run_id>/progress", auth="user", type="http", methods=["GET"])
     def progress(self, run_id, **params):

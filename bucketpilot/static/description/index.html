@@ -1,7 +1,7 @@
 <section class="container py-4">
   <div class="text-center mb-4">
     <h1>BucketPilot for Odoo 18</h1>
-    <p class="lead">Back up files from your Odoo filestore to your BucketPilot storage on demand or on a schedule.</p>
+    <p class="lead">Back up your Odoo filestore on demand or on a schedule, and restore files to their original paths.</p>
     <img src="overview.png" class="img-fluid rounded border" alt="BucketPilot overview in Odoo showing a connected workspace and storage buckets">
   </div>
 
@@ -30,6 +30,11 @@
     <h2>Track each run</h2>
     <p>Backup History records execution status, the destination and confirmed upload totals.</p>
     <img src="backup-history.png" class="img-fluid rounded border" alt="BucketPilot backup history with example completed runs">
+  </div>
+
+  <div class="mb-4">
+    <h2>Restore backed-up files</h2>
+    <p>An Odoo Settings administrator can restore an individual file or an entire backup from Backup History. A background worker downloads the recorded objects and restores missing files to their original filestore paths. Files already present are skipped. Restore History records the reason, progress and result of each file.</p>
   </div>
 
   <div class="border rounded p-3">

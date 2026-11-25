@@ -4,13 +4,13 @@
     "website": "https://bucketpilot.io/",
     "summary": "Connect BucketPilot and schedule Odoo filestore backups",
     "description": (
-        "Schedule Odoo filestore backups to a BucketPilot workspace from Odoo. "
+        "Back up Odoo filestore files to BucketPilot and restore them to their original paths. "
         "Connecting sends the API key to BucketPilot over HTTPS. "
         "A saved backup authorizes selected file contents and relative paths to be sent "
         "to the configured storage destination."
     ),
     "images": ["static/description/overview.png"],
-    "version": "18.0.2.0.0",
+    "version": "18.0.2.1.1",
     "category": "Administration",
     "license": "Other OSI approved licence",
     "depends": ["web", "mail"],

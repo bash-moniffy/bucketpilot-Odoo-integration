@@ -1,0 +1,33 @@
+<dialog class="bp-review-dialog bp-plan-dialog bp-restore-dialog" aria-labelledby="bp-restore-title" data-restore-dialog>
+  <form method="post">
+    <header class="bp-detail-header">
+      <div><h2 id="bp-restore-title" data-restore-title>Restore backup</h2><p data-restore-name dir="auto"></p></div>
+      <button type="button" class="bp-detail-close" data-close-restore aria-label="Close restore review">×</button>
+    </header>
+    <div class="bp-detail-body">
+      <p data-restore-loading role="status">Loading restore details…</p>
+      <div class="bp-restore-alert" data-restore-dialog-error role="alert" hidden></div>
+      <div data-restore-review hidden>
+        <dl class="bp-restore-review">
+          <div><dt>Restore from</dt><dd class="bp-restore-location-name" data-restore-bucket></dd><dd><code tabindex="0" data-restore-key></code></dd></div>
+          <div class="bp-restore-target"><dt>Restore to</dt><dd class="bp-restore-location-name">Odoo filestore</dd><dd><code tabindex="0" data-restore-target></code></dd></div>
+        </dl>
+        <div class="bp-restore-note">
+          <strong data-restore-scope></strong>
+          <span>Files already at the original path are skipped.</span>
+          <span data-restore-excluded hidden></span>
+        </div>
+        <label for="bp-restore-reason">Reason for restore <span>Required</span></label>
+        <textarea id="bp-restore-reason" name="reason" dir="auto" rows="3" maxlength="500" required
+                  placeholder="For example, recover a missing attachment"></textarea>
+      </div>
+      <input type="hidden" name="csrf_token" value="{{ csrf }}">
+      <input type="hidden" name="mode" value="backup">
+      <input type="hidden" name="file" value="">
+    </div>
+    <footer class="bp-detail-footer">
+      <button type="button" class="button" data-close-restore>Cancel</button>
+      <button type="submit" class="button button--primary" disabled>Start restore</button>
+    </footer>
+  </form>
+</dialog>

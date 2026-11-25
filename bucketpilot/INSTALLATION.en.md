@@ -28,6 +28,12 @@ The filestore contains attachments stored on disk, under Odoo's internal file na
 
 **Upgrading from project-file backups?** Open each saved schedule you want to keep, select files or folders from the current source, and save it again. Create a new backup for any older one-time run you want to repeat.
 
+## Restore filestore files
+
+An Odoo Settings administrator can open a finished backup in **Backup History**, then restore a file or the whole backup. Enter a reason in the confirmation dialog. The worker checks the recorded bucket keys and writes missing files to their original filestore paths. Existing files are skipped. Use **Restore History** to see progress, missing files, created folders and retryable errors.
+
+Keep the original backup history until the restore worker has prepared its file list. Restore writes files only, and it uses the same filestore and bucket identity recorded by the backup. Odoo regenerates filestore cleanup markers.
+
 ## Optional setup for your server
 
 **Allow full filestore backups.** By default, each Odoo database can back up its own folder in the filestore. To let the Odoo Settings administrators of one trusted database browse and back up the whole filestore, set `BUCKETPILOT_FILESTORE_ADMIN_DB` in the Odoo service environment to that database's name. For example, under `services → odoo → environment` in Docker Compose:

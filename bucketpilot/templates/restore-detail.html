@@ -1,0 +1,65 @@
+<section class="bp-restore-detail" data-bp-restore data-active="{{ 'yes' if report.active else 'no' }}">
+  <div class="bp-restore-toolbar">
+    <a class="bp-back-link" href="/bucketpilot/restores">Back to Restore History</a>
+    {% if not restore.backup_id.archived %}<a class="button bp-restore-icon" href="/bucketpilot/history/{{ restore.backup_id.public_id }}" aria-label="View original backup" title="View original backup">{% with icon='view' %}{% include 'restore-icon.html' %}{% endwith %}</a>{% endif %}
+  </div>
+
+  <div class="bp-restore-layout">
+    <section class="bp-card bp-restore-progress" data-state="{{ report.state }}">
+      <header class="bp-restore-list-head">
+        <div><h2>{{ restore.backup_name }}</h2><p>{{ restore.source_path or 'Entire backup' }}</p></div>
+        <span class="bp-restore-badge" data-restore-text="label" data-state="{{ report.state }}">{{ report.label }}</span>
+      </header>
+      <div class="bp-restore-progress-status">
+        <span data-restore-phase role="status">{{ report.label }}</span>
+        <strong data-restore-percent>{{ report.percentage|int }}%</strong>
+      </div>
+      <progress aria-label="Restore progress" value="{{ report.percentage }}" max="100"></progress>
+      <div class="bp-restore-progress-meta">
+        <span data-restore-count>{{ report.processed }} of {{ report.total }} files checked</span>
+        <span data-restore-transfer></span>
+      </div>
+      <p class="bp-restore-current" data-restore-text="current_path" {% if not report.current_path %}hidden{% endif %}>{{ report.current_path }}</p>
+      <p class="bp-restore-alert" data-restore-text="error" {% if not report.error %}hidden{% endif %}>{{ report.error }}</p>
+      <p class="bp-restore-secondary" data-restore-feedback role="status" hidden></p>
+      <dl class="bp-restore-metrics">
+        {% for key, label in [('restored', 'Restored'), ('existing', 'Already existed'), ('missing', 'Missing'), ('skipped', 'Skipped'), ('failed', 'Failed')] %}
+        <div><dt>{{ label }}</dt><dd data-restore-text="{{ key }}">{{ report[key] }}</dd></div>
+        {% endfor %}
+      </dl>
+    </section>
+
+    <section class="bp-card bp-restore-info" aria-labelledby="bp-restore-info-title">
+      <h3 id="bp-restore-info-title">Request details</h3>
+      <dl>
+        <div class="bp-restore-reason"><dt>Reason</dt><dd dir="auto">{{ restore.reason or '—' }}</dd></div>
+        <div><dt>Requested by</dt><dd>{{ restore.requester_id.name or '—' }}</dd></div>
+        <div><dt>Bucket</dt><dd>{{ restore.bucket.name }}</dd></div>
+        <div class="bp-restore-time"><dt>Started</dt><dd data-restore-text="started">{{ started }}</dd></div>
+        <div class="bp-restore-time"><dt>Finished</dt><dd data-restore-text="finished">{{ finished }}</dd></div>
+      </dl>
+      <form class="bp-restore-info-footer" action="{{ route }}/retry" method="post" data-restore-retry {% if report.state not in ('failed', 'completed_with_issues') %}hidden{% endif %}>
+        <input type="hidden" name="csrf_token" value="{{ csrf }}">
+        <button type="submit" class="button bp-restore-retry" title="Retry failed or missing files">
+          {% with icon='retry' %}{% include 'restore-icon.html' %}{% endwith %}<span>Retry restore</span>
+        </button>
+      </form>
+    </section>
+  </div>
+
+  <section class="bp-card bp-restore-history">
+    <div class="bp-restore-list-head"><div><h3>File activity</h3><p>Review where each file was restored and see any issues.</p></div></div>
+    <div class="bp-table-scroll bp-restore-table"><table>
+      <thead><tr><th scope="col">Restore from (bucket)</th><th scope="col">Restore to (original path)</th><th scope="col">Result</th><th scope="col">Details</th></tr></thead>
+      <tbody data-restore-files>{% for item in items %}
+        <tr><td><code>{{ item.object_key }}</code></td><td><code>{{ item.source_path }}</code></td>
+          <td><span class="bp-restore-badge" data-state="{{ item.state }}">{{ states[item.state] }}</span></td>
+          <td>{{ item.error or '—' }}{% if item.created_folders %}<div class="bp-restore-secondary">Created {{ item.created_folders|join(', ') }}</div>{% endif %}</td></tr>
+      {% else %}<tr><td colspan="4">The worker will list the files here once it starts.</td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% if page or (page + 1) * 25 < report.total %}<nav class="bp-audit-control" aria-label="Restore file pages">
+      {% if page %}<a class="button" href="?page={{ page - 1 }}">Previous</a>{% endif %}
+      {% if (page + 1) * 25 < report.total %}<a class="button" href="?page={{ page + 1 }}">Next</a>{% endif %}
+    </nav>{% endif %}
+  </section>
+</section>
